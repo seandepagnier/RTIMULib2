@@ -37,14 +37,14 @@
 
 % read in data from saved file
 
-magFile = fopen('mag', 'r');
+magFile = fopen('magRaw.dta', 'r');
 magCalDataMat = fscanf(magFile, '%f %f %f', [3, inf]);
 %fprintf('Mat size = %d\n', size(magCalDataMat));
 fclose(magFile);
 
 % open output file
 
-corrFile = stdout;  %fopen('magCorr.dta', 'w');
+corrFile = fopen('magCorr.dta', 'w');
 
 % create the vectors
 
@@ -52,7 +52,7 @@ x = magCalDataMat(1, :)';
 y = magCalDataMat(2, :)';
 z = magCalDataMat(3, :)';
 
-[center, radii, evecs, v] = ellipsoid_fit( [x y z ], 3 );
+[center, radii, evecs, v] = ellipsoid_fit( [x y z ] );
 
 scaleMat = inv([radii(1) 0 0; 0 radii(2) 0; 0 0 radii(3)]) * min(radii); 
 correctionMat = evecs * scaleMat * evecs';
@@ -72,5 +72,5 @@ fprintf(corrFile, '%f %f %f %f %f %f %f %f %f %f %f %f\n',
 	correctionMat(2, 1), correctionMat(2, 2), correctionMat(2, 3),
 	correctionMat(3, 1), correctionMat(3, 2), correctionMat(3, 3));
 	
-%fclose(corrFile);
+fclose(corrFile);
 
