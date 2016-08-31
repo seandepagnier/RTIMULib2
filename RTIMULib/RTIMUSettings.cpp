@@ -392,6 +392,15 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                 return true;
             }
         }
+	if (HALRead(HMC5883_ADDRESS, HMC5883L_WHO_AM_I, 1, &result, "")) {
+	    if (result == HMC5883L_ID) {
+		imuType = RTIMU_TYPE_HMC5883LADXL345;
+		slaveAddress = HMC5883_ADDRESS;
+		busIsI2C = true;
+		HAL_INFO("Detected HMC5883L at standard address\n");
+		return true;
+	    }
+	}
 
         HALClose();
     }
@@ -1063,6 +1072,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  10 = Bosch BNX055");
     setComment("  11 = InvenSense MPU-9255");
     setComment("  12 = STM LSM6DS33 + LIS3MDL");
+    setComment("  13 = HMC5883L + ADXL345 + L3G4200D");
     setValue(RTIMULIB_IMU_TYPE, m_imuType);
 
     setBlank();

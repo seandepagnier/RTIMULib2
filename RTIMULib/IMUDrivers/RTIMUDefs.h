@@ -45,8 +45,11 @@
 #define RTIMU_TYPE_GD20HM303DLHC            8                   // STM L3GD20H/LSM303DHLC (new Adafruit IMU)
 #define RTIMU_TYPE_BMX055                   9                   // Bosch BMX055
 #define RTIMU_TYPE_BNO055                   10                  // Bosch BNO055
+
 #define RTIMU_TYPE_MPU9255                  11                  // InvenSense MPU9255
 #define RTIMU_TYPE_LSM6DS33LIS3MDL          12                  // STM LSM6DS33/LIS3MDL (Pololu MinIMU v5 / AltIMU v5)
+
+#define RTIMU_TYPE_HMC5883LADXL345          13                  // HMC5883L with ADXL345 and L3G4200D
 
 //----------------------------------------------------------
 //
@@ -145,6 +148,13 @@
 #define HMC5883_STATUS              0x09                    // status
 #define HMC5883_ID                  0x0a                    // id
 
+//----------------------------------------------------------
+//
+// HMC5883L
+
+#define HMC5883L_ADDRESS            0x1e
+#define HMC5883L_WHO_AM_I           0x0a
+#define HMC5883L_ID                 0x48
 
 //----------------------------------------------------------
 //
