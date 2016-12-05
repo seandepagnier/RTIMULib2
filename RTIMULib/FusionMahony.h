@@ -2,7 +2,7 @@
 //
 //  This file is part of RTIMULib
 //
-//  Copyright (c) 2014-2015, richards-tech, LLC
+//  Copyright (c) 2016 Sean D'Epagnier
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of
 //  this software and associated documentation files (the "Software"), to deal in
@@ -16,26 +16,26 @@
 //
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 //  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  PARTICULAR PURPOpSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
 //  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 //  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-#ifndef _RTFUSIONRTQF_H
-#define	_RTFUSIONRTQF_H
+#ifndef _RTFUSIONMAHONY_H
+#define	_RTFUSIONMAHONY_H
 
 #include "RTFusion.h"
 
-class RTFusionRTQF : public RTFusion
+class FusionMahony : public RTFusion
 {
 public:
-    RTFusionRTQF();
-    ~RTFusionRTQF();
+    FusionMahony();
+    ~FusionMahony();
 
     //  fusionType returns the type code of the fusion algorithm
 
-    virtual int fusionType() { return RTFUSION_TYPE_RTQF; }
+    virtual int fusionType() { return RTFUSION_TYPE_MAHONY; }
 
     //  reset() resets the state but keeps any setting changes (such as enables)
 
@@ -46,26 +46,13 @@ public:
 
     void newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings);
 
-protected:
-    RTVector3 m_gyro;                                       // current gyro sample
-    RTVector3 m_accel;                                      // current accel sample
-    RTVector3 m_compass;                                    // current compass sample
-    RTQuaternion m_rotationDelta;                           // amount by which measured state differs from predicted
-    RTQuaternion m_rotationPower;                           // delta raised to the appopriate power
-    RTVector3 m_rotationUnitVector;                         // the vector part of the rotation delta
-
 private:
-    void predict();
-    void update();
 
-    void handleGyroBias();
+    void MahonyAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float dt);
+    void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az, float dt);
 
-    RTFLOAT m_timeDelta;                                    // time between predictions
-
-    RTQuaternion m_stateQ;									// quaternion state vector
-    RTQuaternion m_stateQError;                             // difference between stateQ and measuredQ
-
-    int m_sampleNumber;
+    float integralFBx,  integralFBy, integralFBz;	// integral error terms scaled by Ki
+    float q0, q1, q2, q3;	// quaternion of sensor frame relative to auxiliary frame
 };
 
-#endif // _RTFUSIONRTQF_H
+#endif // _RTFUSIONMAHONY_H

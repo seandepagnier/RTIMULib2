@@ -90,6 +90,14 @@ int main()
                 sampleRate = sampleCount;
                 sampleCount = 0;
                 rateTimer = now;
+
+                static int c = 0;
+                if(c==10){
+                    settings->m_compassCalEllipsoidValid = !settings->m_compassCalEllipsoidValid;
+                    c=0;
+                    printf("value %d\n", settings->m_compassCalEllipsoidValid);
+                }
+                c++;
             }
         }
     }

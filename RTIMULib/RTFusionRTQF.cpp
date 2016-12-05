@@ -121,6 +121,7 @@ void RTFusionRTQF::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings)
         m_gyro = data.gyro;
     else
         m_gyro = RTVector3();
+
     m_accel = data.accel;
     m_compass = data.compass;
     m_compassValid = data.compassValid;
@@ -145,6 +146,7 @@ void RTFusionRTQF::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings)
 
         predict();
         update();
+ 
         m_stateQ.toEuler(m_fusionPose);
         m_fusionQPose = m_stateQ;
 

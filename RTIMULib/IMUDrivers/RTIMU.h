@@ -158,7 +158,7 @@ public:
     const RTVector3& getAccel() { return m_imuData.accel; } // get accel data in gs
     const RTVector3& getCompass() { return m_imuData.compass; } // gets compass data in uT
 
-    RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(); }
+    RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(m_imuData.accel); }
 
 protected:
     void gyroBiasInit();                                    // sets up gyro bias calculation
@@ -167,6 +167,8 @@ protected:
     void calibrateAccel();                                  // calibrate the accelerometers
     void updateFusion();                                    // call when new data to update fusion state
 
+    int m_sampleRate;                                       // samples per second
+    uint64_t m_sampleInterval;                              // interval between samples in microseonds
     bool m_compassCalibrationMode;                          // true if cal mode so don't use cal data!
     bool m_accelCalibrationMode;                            // true if cal mode so don't use cal data!
 
@@ -176,14 +178,6 @@ protected:
 
     RTFusion *m_fusion;                                     // the fusion algorithm
 
-    int m_sampleRate;                                       // samples per second
-    uint64_t m_sampleInterval;                              // interval between samples in microseonds
-
-    RTFLOAT m_gyroLearningAlpha;                            // gyro bias rapid learning rate
-    RTFLOAT m_gyroContinuousAlpha;                          // gyro bias continuous (slow) learning rate
-    int m_gyroSampleCount;                                  // number of gyro samples used
-
-    RTVector3 m_previousAccel;                              // previous step accel for gyro learning
 
     float m_compassCalOffset[3];
     float m_compassCalScale[3];

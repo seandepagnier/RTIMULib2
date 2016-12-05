@@ -512,17 +512,37 @@ bool RTIMUMPU9255::IMURead()
     unsigned char fifoData[12];
     unsigned char compassData[8];
 
-    if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_COUNT_H, 2, fifoCount, "Failed to read fifo count"))
-         return false;
+    if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_COUNT_H, 2, fifoCount, "Failed to read fifo count")) {
+        resetFifo();
+        return false;
+    }
 
     count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
 
+//    if(count > 12)
+//        printf("fifocnt %d\n", count);
     if (count == 512) {
-        HAL_INFO("MPU-9255 fifo has overflowed");
+        HAL_INFO("MPU-9255 fifo has overflowed\n");
         resetFifo();
-        m_imuData.timestamp += m_sampleInterval * (512 / MPU9255_FIFO_CHUNK_SIZE + 1); // try to fix timestamp
+        m_imuData.timestamp += m_sampleInterval * (512 / MPU9255_FIFO_CHUNK_SIZE + 1); // try to fix timestamp???
+
+
+        if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_COUNT_H, 2, fifoCount, "Failed to read fifo count"))
+            return false;
+
+        count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
+        printf("new count %d\n", count);
         return false;
     }
+
+    if (count >= 512) {
+        // I have seen this in cases where the device gets in a bad state...
+        // I know to fixed it by rebooting the pi :-/  for now simply report it
+        HAL_INFO("MPU-9255 fifo has invalid count\n");
+        resetFifo();
+        return false;
+    }
+
 
 #ifdef MPU9255_CACHE_MODE
     if ((m_cacheCount == 0) && (count  >= MPU9255_FIFO_CHUNK_SIZE) && (count < (MPU9255_CACHE_SIZE * MPU9255_FIFO_CHUNK_SIZE))) {

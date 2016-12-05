@@ -48,6 +48,8 @@ SET(LIBRTIMU_SRCS
     RTFusionRTQF.cpp
     RTMath.cpp
     RTFusionKalman4.cpp
+    FusionMadgwick.cpp
+    FusionMahony.cpp
     RTIMUAccelCal.cpp
     RTIMUHal.cpp
     RTIMUMagCal.cpp

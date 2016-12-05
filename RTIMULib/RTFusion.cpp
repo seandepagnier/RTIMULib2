@@ -34,7 +34,9 @@
 const char *RTFusion::m_fusionNameMap[] = {
     "NULL",
     "Kalman STATE4",
-    "RTQF"};
+    "RTQF",
+    "Madgwick",
+    "Mahony"};
 
 RTFusion::RTFusion()
 {
@@ -43,11 +45,6 @@ RTFusion::RTFusion()
     m_enableGyro = true;
     m_enableAccel = true;
     m_enableCompass = true;
-
-    m_gravity.setScalar(0);
-    m_gravity.setX(0);
-    m_gravity.setY(0);
-    m_gravity.setZ(1);
 
     m_slerpPower = RTQF_SLERP_POWER;
 }
@@ -110,7 +107,7 @@ void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float
 }
 
 
-RTVector3 RTFusion::getAccelResiduals()
+RTVector3 RTFusion::getAccelResiduals(RTVector3 accel)
 {
     RTQuaternion rotatedGravity;
     RTQuaternion fusedConjugate;
@@ -124,14 +121,14 @@ RTVector3 RTFusion::getAccelResiduals()
     fusedConjugate = m_fusionQPose.conjugate();
 
     // now do the rotation - takes two steps with qTemp as the intermediate variable
-
-    qTemp = m_gravity * m_fusionQPose;
+    RTQuaternion gravity(0, 0, 0, 1);
+    qTemp = gravity * m_fusionQPose;
     rotatedGravity = fusedConjugate * qTemp;
 
     // now adjust the measured accel and change the signs to make sense
 
-    residuals.setX(-(m_accel.x() - rotatedGravity.x()));
-    residuals.setY(-(m_accel.y() - rotatedGravity.y()));
-    residuals.setZ(-(m_accel.z() - rotatedGravity.z()));
+    residuals.setX(-(accel.x() - rotatedGravity.x()));
+    residuals.setY(-(accel.y() - rotatedGravity.y()));
+    residuals.setZ(-(accel.z() - rotatedGravity.z()));
     return residuals;
 }

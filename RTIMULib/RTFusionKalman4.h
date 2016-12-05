@@ -51,11 +51,26 @@ public:
     void setQMatrix(RTMatrix4x4 Q) {  m_Q = Q; reset();}
     void setRkMatrix(RTMatrix4x4 Rk) { m_Rk = Rk; reset();}
 
+protected:
+    RTVector3 m_gyro;                                       // current gyro sample
+    RTVector3 m_accel;                                      // current accel sample
+    RTVector3 m_compass;                                    // current compass sample
+    RTQuaternion m_rotationDelta;                           // amount by which measured state differs from predicted
+    RTQuaternion m_rotationPower;                           // delta raised to the appopriate power
+    RTVector3 m_rotationUnitVector;                         // the vector part of the rotation delta
+
 private:
+    virtual void gyroBiasInit(float samplerate);
+    virtual void handleGyroBias(RTIMU_DATA& imuData, RTIMUSettings *settings);
+    RTFLOAT m_gyroLearningAlpha;                            // gyro bias rapid learning rate
+    RTFLOAT m_gyroContinuousAlpha;                          // gyro bias continuous (slow) learning rate
+    RTFLOAT m_gyroSampleRate;
+    int m_gyroSampleCount;                                  // number of gyro samples used
+    RTVector3 m_previousAccel;                              // previous step accel for gyro learning
+
     void predict();
     void update();
 
-    RTVector3 m_gyro;										// unbiased gyro data
     RTFLOAT m_timeDelta;                                    // time between predictions
 
     RTQuaternion m_stateQ;									// quaternion state vector

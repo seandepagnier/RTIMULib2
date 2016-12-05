@@ -35,8 +35,10 @@
 #define RTFUSION_TYPE_NULL                  0                   // just a dummy to keep things happy if not needed
 #define RTFUSION_TYPE_KALMANSTATE4          1                   // kalman state is the quaternion pose
 #define RTFUSION_TYPE_RTQF                  2                   // RT quaternion fusion
+#define RTFUSION_TYPE_MADGWICK              3                   // RT quaternion fusion
+#define RTFUSION_TYPE_MAHONY                4                   // RT quaternion fusion
 
-#define RTFUSION_TYPE_COUNT                 3                   // number of fusion algorithm types
+#define RTFUSION_TYPE_COUNT                 5                   // number of fusion algorithm types
 
 //  This is a convenience structure that can be used to pass IMU data around
 

@@ -2,7 +2,7 @@
 //
 //  This file is part of RTIMULib
 //
-//  Copyright (c) 2014-2015, richards-tech, LLC
+//  Copyright (c) 2016 Sean D'Epagnier
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of
 //  this software and associated documentation files (the "Software"), to deal in
@@ -22,20 +22,20 @@
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-#ifndef _RTFUSIONRTQF_H
-#define	_RTFUSIONRTQF_H
+#ifndef _RTFUSIONMADGWICK_H
+#define	_RTFUSIONMADGWICK_H
 
 #include "RTFusion.h"
 
-class RTFusionRTQF : public RTFusion
+class FusionMadgwick : public RTFusion
 {
 public:
-    RTFusionRTQF();
-    ~RTFusionRTQF();
+    FusionMadgwick();
+    ~FusionMadgwick();
 
     //  fusionType returns the type code of the fusion algorithm
 
-    virtual int fusionType() { return RTFUSION_TYPE_RTQF; }
+    virtual int fusionType() { return RTFUSION_TYPE_MADGWICK; }
 
     //  reset() resets the state but keeps any setting changes (such as enables)
 
@@ -46,26 +46,12 @@ public:
 
     void newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings);
 
-protected:
-    RTVector3 m_gyro;                                       // current gyro sample
-    RTVector3 m_accel;                                      // current accel sample
-    RTVector3 m_compass;                                    // current compass sample
-    RTQuaternion m_rotationDelta;                           // amount by which measured state differs from predicted
-    RTQuaternion m_rotationPower;                           // delta raised to the appopriate power
-    RTVector3 m_rotationUnitVector;                         // the vector part of the rotation delta
-
 private:
-    void predict();
-    void update();
 
-    void handleGyroBias();
+    void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float dt);
+    void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az, float dt);
 
-    RTFLOAT m_timeDelta;                                    // time between predictions
-
-    RTQuaternion m_stateQ;									// quaternion state vector
-    RTQuaternion m_stateQError;                             // difference between stateQ and measuredQ
-
-    int m_sampleNumber;
+    float q0, q1, q2, q3;	// quaternion of sensor frame relative to auxiliary frame
 };
 
-#endif // _RTFUSIONRTQF_H
+#endif // _RTFUSIONMADGWICK_H

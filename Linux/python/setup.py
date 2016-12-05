@@ -34,6 +34,8 @@ RTIMU_sources = [
     "RTFusion.cpp",
     "RTFusionKalman4.cpp",
     "RTFusionRTQF.cpp",
+    "FusionMadgwick.cpp",
+    "FusionMahony.cpp",
     "RTIMUSettings.cpp",
     "IMUDrivers/RTIMU.cpp",
     "IMUDrivers/RTIMUNull.cpp",
@@ -66,7 +68,7 @@ mod = Extension('RTIMU',
                 [ os.path.join(RTIMU_sourcedir, sr) for sr in RTIMU_sources],
                 include_dirs = [RTIMU_sourcedir],
                 extra_compile_args = ['-std=c++0x'],
-                define_macros = [("HAL_QUIET", None)]
+#                define_macros = [("HAL_QUIET", None)]
                 )
 
 setup (name = 'RTIMULib',

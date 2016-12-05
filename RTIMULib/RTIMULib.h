@@ -30,7 +30,6 @@
 #include "RTMath.h"
 
 #include "RTFusion.h"
-#include "RTFusionKalman4.h"
 
 #include "RTIMUHal.h"
 #include "IMUDrivers/RTIMU.h"
