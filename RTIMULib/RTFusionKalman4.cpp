@@ -259,8 +259,8 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings
 void RTFusionKalman4::gyroBiasInit(float samplerate)
 {
     // sets up gyro bias calculation
-    m_gyroLearningAlpha = 2.0f / samplerate;
-    m_gyroContinuousAlpha = 0.01f / samplerate;
+    m_gyroLearningAlpha = 0.01f / samplerate;
+    m_gyroContinuousAlpha = 0.004f / samplerate;
     m_gyroSampleCount = 0;
     m_gyroSampleRate = samplerate;
 }
@@ -271,27 +271,29 @@ void RTFusionKalman4::handleGyroBias(RTIMU_DATA& imuData, RTIMUSettings *setting
     deltaAccel -= imuData.accel;   // compute difference
     m_previousAccel = imuData.accel;
 
-    if ((deltaAccel.length() < RTIMU_FUZZY_ACCEL_ZERO) && (imuData.gyro.length() < RTIMU_FUZZY_GYRO_ZERO)) {
+    int startuptime = 60;
+    // at startup, find gyro bias much faster
+    if (m_gyroSampleCount < (startuptime * m_gyroSampleRate) &&
+//        deltaAccel.length() < RTIMU_FUZZY_ACCEL_ZERO &&
+        imuData.gyro.length() < RTIMU_FUZZY_GYRO_ZERO) {
         // what we are seeing on the gyros should be bias only so learn from this
 
-        if (m_gyroSampleCount < (5 * m_gyroSampleRate)) {
-            settings->m_gyroBias.setX((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.x() + m_gyroLearningAlpha * imuData.gyro.x());
-            settings->m_gyroBias.setY((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.y() + m_gyroLearningAlpha * imuData.gyro.y());
-            settings->m_gyroBias.setZ((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.z() + m_gyroLearningAlpha * imuData.gyro.z());
+        settings->m_gyroBias.setX((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.x() + m_gyroLearningAlpha * imuData.gyro.x());
+        settings->m_gyroBias.setY((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.y() + m_gyroLearningAlpha * imuData.gyro.y());
+        settings->m_gyroBias.setZ((1.0 - m_gyroLearningAlpha) * settings->m_gyroBias.z() + m_gyroLearningAlpha * imuData.gyro.z());
 
-            m_gyroSampleCount++;
-
-            if (m_gyroSampleCount == (5 * m_gyroSampleRate)) {
-                // this could have been true already of course
-                settings->m_gyroBiasValid = true;
+        if (m_gyroSampleCount == (startuptime * m_gyroSampleRate)) {
+            // this could have been true already of course
+            settings->m_gyroBiasValid = true;
 //                settings->saveSettings(); // should NOT do file IO here
-            }
-        } else {
-            settings->m_gyroBias.setX((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.x() + m_gyroContinuousAlpha * imuData.gyro.x());
-            settings->m_gyroBias.setY((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.y() + m_gyroContinuousAlpha * imuData.gyro.y());
-            settings->m_gyroBias.setZ((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.z() + m_gyroContinuousAlpha * imuData.gyro.z());
         }
     }
+
+    m_gyroSampleCount++;
+
+    settings->m_gyroBias.setX((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.x() + m_gyroContinuousAlpha * imuData.gyro.x());
+    settings->m_gyroBias.setY((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.y() + m_gyroContinuousAlpha * imuData.gyro.y());
+    settings->m_gyroBias.setZ((1.0 - m_gyroContinuousAlpha) * settings->m_gyroBias.z() + m_gyroContinuousAlpha * imuData.gyro.z());
 
     imuData.gyro -= settings->m_gyroBias;
 }

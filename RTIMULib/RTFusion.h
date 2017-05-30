@@ -52,7 +52,7 @@ public:
 
     virtual void newIMUData(RTIMU_DATA& /* data */, const RTIMUSettings * /* settings */) {}
     virtual void gyroBiasInit(float samplerate) {}
-    virtual void handleGyroBias(RTIMU_DATA&, const RTIMUSettings *settings) {}
+    virtual void handleGyroBias(RTIMU_DATA&, RTIMUSettings *settings) {}
 
     //  This static function returns performs the type to name mapping
 

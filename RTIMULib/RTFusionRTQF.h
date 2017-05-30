@@ -58,8 +58,6 @@ private:
     void predict();
     void update();
 
-    void handleGyroBias();
-
     RTFLOAT m_timeDelta;                                    // time between predictions
 
     RTQuaternion m_stateQ;									// quaternion state vector
