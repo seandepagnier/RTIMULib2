@@ -89,6 +89,8 @@ OBJECTS = objects/RTIMULibDrive.o \
     objects/RTFusion.o \
     objects/RTFusionKalman4.o \
     objects/RTFusionRTQF.o \
+    objects/FusionMadgwick.o \
+    objects/FusionMahony.o \
     objects/RTIMUSettings.o \
     objects/RTIMUAccelCal.o \
     objects/RTIMUMagCal.o \
@@ -104,6 +106,8 @@ OBJECTS = objects/RTIMULibDrive.o \
     objects/RTIMULSM9DS1.o \
     objects/RTIMUBMX055.o \
     objects/RTIMUBNO055.o \
+    objects/RTIMUHMC5883LADXL345.o \
+    objects/RTIMULSM6DS33LIS3MDL.o \
     objects/RTPressure.o \
     objects/RTPressureBMP180.o \
     objects/RTPressureLPS25H.o \
@@ -129,7 +133,7 @@ clean:
 $(OBJECTS_DIR)%.o : $(RTIMULIBPATH)/%.cpp $(DEPS)
 	@$(CHK_DIR_EXISTS) objects/ || $(MKDIR) objects/
 	$(CXX) -c -o $@ $< $(CFLAGS) $(INCPATH)
-	
+
 $(OBJECTS_DIR)%.o : $(RTIMULIBPATH)/IMUDrivers/%.cpp $(DEPS)
 	@$(CHK_DIR_EXISTS) objects/ || $(MKDIR) objects/
 	$(CXX) -c -o $@ $< $(CFLAGS) $(INCPATH)

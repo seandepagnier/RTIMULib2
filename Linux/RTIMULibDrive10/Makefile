@@ -28,8 +28,8 @@ RTIMULIBPATH  = ../../RTIMULib
 CC    			= gcc
 CXX   			= g++
 DEFINES       	=
-CFLAGS			= -pipe -O2 -Wall -W $(DEFINES)
-CXXFLAGS      	= -pipe -O2 -Wall -W $(DEFINES)
+CFLAGS			= -pipe -g3 -Wall -W $(DEFINES)
+CXXFLAGS      	= -pipe -g3 -Wall -W $(DEFINES)
 INCPATH       	= -I. -I$(RTIMULIBPATH)
 LINK  			= g++
 LFLAGS			= -Wl,-O1
@@ -89,6 +89,8 @@ OBJECTS = objects/RTIMULibDrive10.o \
     objects/RTFusion.o \
     objects/RTFusionKalman4.o \
     objects/RTFusionRTQF.o \
+    objects/FusionMadgwick.o \
+    objects/FusionMahony.o \
     objects/RTIMUSettings.o \
     objects/RTIMUAccelCal.o \
     objects/RTIMUMagCal.o \
@@ -97,6 +99,8 @@ OBJECTS = objects/RTIMULibDrive10.o \
     objects/RTIMUMPU9150.o \
     objects/RTIMUMPU9250.o \
     objects/RTIMUMPU9255.o \
+    objects/RTIMULSM6DS33LIS3MDL.o \
+    objects/RTIMUHMC5883LADXL345.o \
     objects/RTIMUGD20HM303D.o \
     objects/RTIMUGD20M303DLHC.o \
     objects/RTIMUGD20HM303DLHC.o \
