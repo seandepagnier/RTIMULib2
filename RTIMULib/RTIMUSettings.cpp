@@ -572,6 +572,9 @@ void RTIMUSettings::setDefaults()
     m_accelCalValid = false;
     m_gyroBiasValid = false;
 
+    m_kalmanRk = 5e-4;
+    m_kalmanQ = 1e-3;
+
     //  MPU9150 defaults
 
     m_MPU9150GyroAccelSampleRate = 50;
@@ -591,12 +594,12 @@ void RTIMUSettings::setDefaults()
 
     //  MPU9255 defaults
 
-    m_MPU9255GyroAccelSampleRate = 80;
-    m_MPU9255CompassSampleRate = 40;
+    m_MPU9255GyroAccelSampleRate = 100;
+    m_MPU9255CompassSampleRate = 100;
     m_MPU9255GyroLpf = MPU9255_GYRO_LPF_41;
     m_MPU9255AccelLpf = MPU9255_ACCEL_LPF_41;
-    m_MPU9255GyroFsr = MPU9255_GYROFSR_1000;
-    m_MPU9255AccelFsr = MPU9255_ACCELFSR_8;
+    m_MPU9255GyroFsr = MPU9255_GYROFSR_250;
+    m_MPU9255AccelFsr = MPU9255_ACCELFSR_2;
 
     //  GD20HM303D defaults
 

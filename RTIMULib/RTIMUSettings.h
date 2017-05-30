@@ -277,6 +277,8 @@ public:
     bool m_gyroBiasValid;                                   // true if the recorded gyro bias is valid
     RTVector3 m_gyroBias;                                   // the recorded gyro bias
 
+    float m_kalmanRk, m_kalmanQ;
+
     //  IMU-specific vars
 
     //  MPU9150
