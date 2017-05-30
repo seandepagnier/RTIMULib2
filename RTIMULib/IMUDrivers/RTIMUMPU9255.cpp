@@ -288,7 +288,7 @@ bool RTIMUMPU9255::resetFifo()
     if (!m_settings->HALWrite(m_slaveAddr, MPU9255_INT_ENABLE, 1, "Writing int enable"))
         return false;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_FIFO_EN, 0x78, "Failed to set FIFO enables"))
+    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_FIFO_EN, 0x79, "Failed to set FIFO enables"))
         return false;
 
     return true;
@@ -404,21 +404,22 @@ bool RTIMUMPU9255::compassSetup() {
     //  both interfaces
 
     //  convert asa to usable scale factor
+    //printf("asa %x%x%x\n", asa[0], asa[1], asa[2]);
 
     m_compassAdjust[0] = ((float)asa[0] - 128.0) / 256.0 + 1.0f;
     m_compassAdjust[1] = ((float)asa[1] - 128.0) / 256.0 + 1.0f;
     m_compassAdjust[2] = ((float)asa[2] - 128.0) / 256.0 + 1.0f;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_MST_CTRL, 0x40, "Failed to set I2C master mode"))
-        return false;
+//    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_MST_CTRL, 0x40, "Failed to set I2C master mode"))
+//        return false;
 
     if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS, "Failed to set slave 0 address"))
         return false;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV0_REG, AK8963_ST1, "Failed to set slave 0 reg"))
+    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV0_REG, AK8963_ST1+1, "Failed to set slave 0 reg"))
         return false;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV0_CTRL, 0x88, "Failed to set slave 0 ctrl"))
+    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV0_CTRL, 0x86, "Failed to set slave 0 ctrl"))
         return false;
 
     if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV1_ADDR, AK8963_ADDRESS, "Failed to set slave 1 address"))
@@ -430,10 +431,11 @@ bool RTIMUMPU9255::compassSetup() {
     if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV1_CTRL, 0x81, "Failed to set slave 1 ctrl"))
         return false;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV1_DO, 0x1, "Failed to set slave 1 DO"))
+    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV1_DO, 0x6, "Failed to set slave 1 DO"))
         return false;
 
-    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_MST_DELAY_CTRL, 0x3, "Failed to set mst delay"))
+    // needed to ensure correct data if reading without fifo
+    if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_MST_DELAY_CTRL, 0x81, "Failed to set mst delay"))
         return false;
 
     return true;
@@ -447,6 +449,8 @@ bool RTIMUMPU9255::setCompassRate()
 
     if (rate > 31)
         rate = 31;
+
+    rate = 0;
     if (!m_settings->HALWrite(m_slaveAddr, MPU9255_I2C_SLV4_CTRL, rate, "Failed to set slave ctrl 4"))
          return false;
     return true;
@@ -509,8 +513,7 @@ bool RTIMUMPU9255::IMURead()
 {
     unsigned char fifoCount[2];
     unsigned int count;
-    unsigned char fifoData[12];
-    unsigned char compassData[8];
+    unsigned char fifoData[360];
 
     if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_COUNT_H, 2, fifoCount, "Failed to read fifo count")) {
         resetFifo();
@@ -519,19 +522,15 @@ bool RTIMUMPU9255::IMURead()
 
     count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
 
-//    if(count > 12)
-//        printf("fifocnt %d\n", count);
+    if (count < MPU9255_FIFO_CHUNK_SIZE)
+        return false;
+    
     if (count == 512) {
         HAL_INFO("MPU-9255 fifo has overflowed\n");
+        HAL_INFO("MPU-9255 trying to reinitialize sensors\n");
+        IMUInit();
+        return false;
         resetFifo();
-        m_imuData.timestamp += m_sampleInterval * (512 / MPU9255_FIFO_CHUNK_SIZE + 1); // try to fix timestamp???
-
-
-        if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_COUNT_H, 2, fifoCount, "Failed to read fifo count"))
-            return false;
-
-        count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
-        printf("new count %d\n", count);
         return false;
     }
 
@@ -543,92 +542,70 @@ bool RTIMUMPU9255::IMURead()
         return false;
     }
 
-
-#ifdef MPU9255_CACHE_MODE
-    if ((m_cacheCount == 0) && (count  >= MPU9255_FIFO_CHUNK_SIZE) && (count < (MPU9255_CACHE_SIZE * MPU9255_FIFO_CHUNK_SIZE))) {
-        // special case of a small fifo and nothing cached - just handle as simple read
-
-        if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, MPU9255_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
-            return false;
-
-        if (!m_settings->HALRead(m_slaveAddr, MPU9255_EXT_SENS_DATA_00, 8, compassData, "Failed to read compass data"))
-            return false;
-    } else {
-        if (count >= (MPU9255_CACHE_SIZE * MPU9255_FIFO_CHUNK_SIZE)) {
-            if (m_cacheCount == MPU9255_CACHE_BLOCK_COUNT) {
-                // all cache blocks are full - discard oldest and update timestamp to account for lost samples
-                m_imuData.timestamp += m_sampleInterval * m_cache[m_cacheOut].count;
-                if (++m_cacheOut == MPU9255_CACHE_BLOCK_COUNT)
-                    m_cacheOut = 0;
-                m_cacheCount--;
-            }
-
-            int blockCount = count / MPU9255_FIFO_CHUNK_SIZE;   // number of chunks in fifo
-
-            if (blockCount > MPU9255_CACHE_SIZE)
-                blockCount = MPU9255_CACHE_SIZE;
-
-            if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, MPU9255_FIFO_CHUNK_SIZE * blockCount,
-                    m_cache[m_cacheIn].data, "Failed to read fifo data"))
-                return false;
-
-            if (!m_settings->HALRead(m_slaveAddr, MPU9255_EXT_SENS_DATA_00, 8, m_cache[m_cacheIn].compass, "Failed to read compass data"))
-                return false;
-
-            m_cache[m_cacheIn].count = blockCount;
-            m_cache[m_cacheIn].index = 0;
-
-            m_cacheCount++;
-            if (++m_cacheIn == MPU9255_CACHE_BLOCK_COUNT)
-                m_cacheIn = 0;
-
-        }
-
-        //  now fifo has been read if necessary, get something to process
-
-        if (m_cacheCount == 0)
-            return false;
-
-        memcpy(fifoData, m_cache[m_cacheOut].data + m_cache[m_cacheOut].index, MPU9255_FIFO_CHUNK_SIZE);
-        memcpy(compassData, m_cache[m_cacheOut].compass, 8);
-
-        m_cache[m_cacheOut].index += MPU9255_FIFO_CHUNK_SIZE;
-
-        if (--m_cache[m_cacheOut].count == 0) {
-            //  this cache block is now empty
-
-            if (++m_cacheOut == MPU9255_CACHE_BLOCK_COUNT)
-                m_cacheOut = 0;
-            m_cacheCount--;
-        }
+    if (count > 360) {
+        HAL_INFO("MPU-9255 fifo has more than 20 samples!!\n");
+        count = 360;
     }
 
-#else
-
-    if (count > MPU9255_FIFO_CHUNK_SIZE * 40) {
-        // more than 40 samples behind - going too slowly so discard some samples but maintain timestamp correctly
-        while (count >= MPU9255_FIFO_CHUNK_SIZE * 10) {
-            if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, MPU9255_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
-                return false;
-            count -= MPU9255_FIFO_CHUNK_SIZE;
-            m_imuData.timestamp += m_sampleInterval;
-        }
-    }
-
+#if 0    
     if (count < MPU9255_FIFO_CHUNK_SIZE)
         return false;
 
     if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, MPU9255_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
         return false;
 
-    if (!m_settings->HALRead(m_slaveAddr, MPU9255_EXT_SENS_DATA_00, 8, compassData, "Failed to read compass data"))
+    if (!m_settings->HALRead(m_slaveAddr, MPU9255_EXT_SENS_DATA_00, 6, compassData, "Failed to read compass data"))
         return false;
-
-#endif
 
     RTMath::convertToVector(fifoData, m_imuData.accel, m_accelScale, true);
     RTMath::convertToVector(fifoData + 6, m_imuData.gyro, m_gyroScale, true);
     RTMath::convertToVector(compassData + 1, m_imuData.compass, 0.6f, false);
+#else
+
+    count /= MPU9255_FIFO_CHUNK_SIZE;
+
+    if (count > 10) {
+        if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, MPU9255_FIFO_CHUNK_SIZE*10, fifoData, "Failed to read fifo data") ||
+            !m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, (count-10)*MPU9255_FIFO_CHUNK_SIZE, fifoData+MPU9255_FIFO_CHUNK_SIZE*10, "Failed to read fifo data"))
+            return false;
+    } else       
+        if (!m_settings->HALRead(m_slaveAddr, MPU9255_FIFO_R_W, count*MPU9255_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
+            return false;
+
+    RTVector3 accel_t, gyro_t, compass_t;
+    unsigned char *p = fifoData;
+    //printf("count %d\n", count);
+    for(uint8_t i=0; i<count; i++) {
+        RTVector3 accel, gyro, compass;
+        RTMath::convertToVector(p,    accel, m_accelScale, true);
+        RTMath::convertToVector(p+6,  gyro, m_gyroScale, true);
+        RTMath::convertToVector(p+12, compass, .6, false);
+
+        /* check for out of sync, if high/low bytes are not shadowed */
+        static RTVector3 lastcompass;
+        if(fabs(lastcompass.z() - compass.z()) > 64) {
+            printf("possible byte issue %f %f",
+                   lastcompass.z(), compass.z());
+            for(int i=0; i<8; i++)
+                printf(" %x", p[i+12]);
+            printf("\n");
+        }
+        lastcompass = compass;
+
+        p += MPU9255_FIFO_CHUNK_SIZE;
+    
+        accel_t += accel;
+        gyro_t += gyro;
+        compass_t += compass;
+    }
+
+    // average samples
+    for(int i=0; i<3; i++) {
+        m_imuData.accel.setData(i, accel_t.data(i)/count);
+        m_imuData.gyro.setData(i, gyro_t.data(i)/count);
+        m_imuData.compass.setData(i, compass_t.data(i)/count);
+    }
+#endif
 
     //  sort out gyro axes
 
@@ -663,7 +640,7 @@ bool RTIMUMPU9255::IMURead()
     if (m_firstTime)
         m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
     else
-        m_imuData.timestamp += m_sampleInterval;
+        m_imuData.timestamp += m_sampleInterval * count;
 
     m_firstTime = false;
 

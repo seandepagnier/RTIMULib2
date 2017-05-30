@@ -238,7 +238,7 @@ bool RTIMUHal::HALRead(unsigned char slaveAddr, unsigned char regAddr, unsigned 
             if (total == length)
                 break;
 
-            delayMs(10);
+            delayMs(1);
             tries++;
         }
 
@@ -293,7 +293,7 @@ bool RTIMUHal::HALRead(unsigned char slaveAddr, unsigned char length,
             if (total == length)
                 break;
 
-            delayMs(10);
+            delayMs(1);
             tries++;
         }
 

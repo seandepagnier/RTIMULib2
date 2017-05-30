@@ -30,31 +30,9 @@
 
 #include "RTIMU.h"
 
-//  Define this symbol to use cache mode
-
-//#define MPU9255_CACHE_MODE
-
 //  FIFO transfer size
 
-#define MPU9255_FIFO_CHUNK_SIZE     12                      // gyro and accels take 12 bytes
-
-#ifdef MPU9255_CACHE_MODE
-
-//  Cache mode defines
-
-#define MPU9255_CACHE_SIZE          16                      // number of chunks in a block
-#define MPU9255_CACHE_BLOCK_COUNT   16                      // number of cache blocks
-
-typedef struct
-{
-    unsigned char data[MPU9255_FIFO_CHUNK_SIZE * MPU9255_CACHE_SIZE];
-    int count;                                              // number of chunks in the cache block
-    int index;                                              // current index into the cache
-    unsigned char compass[8];                               // the raw compass readings for the block
-
-} MPU9255_CACHE_BLOCK;
-
-#endif
+#define MPU9255_FIFO_CHUNK_SIZE     18                      // gyro and accels take 12 bytes
 
 
 class RTIMUMPU9255 : public RTIMU
