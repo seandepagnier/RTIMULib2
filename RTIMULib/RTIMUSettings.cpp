@@ -539,6 +539,28 @@ bool RTIMUSettings::discoverHumidity(int& humidityType, unsigned char& humidityA
     return false;
 }
 
+/* the default bus is 1 for raspberry pi, but for orange pi,
+   the bus is 0
+*/
+int DefaultI2CBus()
+{
+    int bus = 1;
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if(f) {
+        char line[80];
+        while(fgets(line, sizeof line, f)) {
+            if(strstr(line, "Hardware")) {
+                if(strstr(line, "sun8i"))
+                    bus = 0;
+                break;
+            }
+        }
+    }
+    fclose(f);
+    return bus;
+}
+
+
 void RTIMUSettings::setDefaults()
 {
     //  preset general defaults
@@ -546,7 +568,7 @@ void RTIMUSettings::setDefaults()
     m_imuType = RTIMU_TYPE_AUTODISCOVER;
     m_I2CSlaveAddress = 0;
     m_busIsI2C = true;
-    m_I2CBus = 1;
+    m_I2CBus = DefaultI2CBus();
     m_SPIBus = 0;
     m_SPISelect = 0;
     m_SPISpeed = 500000;
