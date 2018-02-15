@@ -54,23 +54,14 @@
 #define RTIMULIB_MPU9150_GYRO_FSR           "MPU9150GyroFSR"
 #define RTIMULIB_MPU9150_ACCEL_FSR          "MPU9150AccelFSR"
 
-//  MPU9250 settings keys
+//  MPU925x settings keys
 
-#define RTIMULIB_MPU9250_GYROACCEL_SAMPLERATE "MPU9250GyroAccelSampleRate"
-#define RTIMULIB_MPU9250_COMPASS_SAMPLERATE "MPU9250CompassSampleRate"
-#define RTIMULIB_MPU9250_GYRO_LPF           "MPU9250GyroLpf"
-#define RTIMULIB_MPU9250_ACCEL_LPF          "MPU9250AccelLpf"
-#define RTIMULIB_MPU9250_GYRO_FSR           "MPU9250GyroFSR"
-#define RTIMULIB_MPU9250_ACCEL_FSR          "MPU9250AccelFSR"
-
-//  MPU9255 settings keys
-
-#define RTIMULIB_MPU9255_GYROACCEL_SAMPLERATE "MPU9255GyroAccelSampleRate"
-#define RTIMULIB_MPU9255_COMPASS_SAMPLERATE   "MPU9255CompassSampleRate"
-#define RTIMULIB_MPU9255_GYRO_LPF             "MPU9255GyroLpf"
-#define RTIMULIB_MPU9255_ACCEL_LPF            "MPU9255AccelLpf"
-#define RTIMULIB_MPU9255_GYRO_FSR             "MPU9255GyroFSR"
-#define RTIMULIB_MPU9255_ACCEL_FSR            "MPU9255AccelFSR"
+#define RTIMULIB_MPU925x_GYROACCEL_SAMPLERATE "MPU925xGyroAccelSampleRate"
+#define RTIMULIB_MPU925x_COMPASS_SAMPLERATE "MPU925xCompassSampleRate"
+#define RTIMULIB_MPU925x_GYRO_LPF           "MPU925xGyroLpf"
+#define RTIMULIB_MPU925x_ACCEL_LPF          "MPU925xAccelLpf"
+#define RTIMULIB_MPU925x_GYRO_FSR           "MPU925xGyroFSR"
+#define RTIMULIB_MPU925x_ACCEL_FSR          "MPU9250AccelFSR"
 
 //  GD20HM303D settings keys
 
@@ -289,23 +280,15 @@ public:
     int m_MPU9150GyroFsr;                                   // FSR code for the gyro
     int m_MPU9150AccelFsr;                                  // FSR code for the accel
 
-    //  MPU9250
+    //  MPU925x
 
-    int m_MPU9250GyroAccelSampleRate;                       // the sample rate (samples per second) for gyro and accel
-    int m_MPU9250CompassSampleRate;                         // same for the compass
-    int m_MPU9250GyroLpf;                                   // low pass filter code for the gyro
-    int m_MPU9250AccelLpf;                                  // low pass filter code for the accel
-    int m_MPU9250GyroFsr;                                   // FSR code for the gyro
-    int m_MPU9250AccelFsr;                                  // FSR code for the accel
+    int m_MPU925xGyroAccelSampleRate;                       // the sample rate (samples per second) for gyro and accel
+    int m_MPU925xCompassSampleRate;                         // same for the compass
+    int m_MPU925xGyroLpf;                                   // low pass filter code for the gyro
+    int m_MPU925xAccelLpf;                                  // low pass filter code for the accel
+    int m_MPU925xGyroFsr;                                   // FSR code for the gyro
+    int m_MPU925xAccelFsr;                                  // FSR code for the accel
 
-    //  MPU9255
-
-    int m_MPU9255GyroAccelSampleRate;                       // the sample rate (samples per second) for gyro and accel
-    int m_MPU9255CompassSampleRate;                         // same for the compass
-    int m_MPU9255GyroLpf;                                   // low pass filter code for the gyro
-    int m_MPU9255AccelLpf;                                  // low pass filter code for the accel
-    int m_MPU9255GyroFsr;                                   // FSR code for the gyro
-    int m_MPU9255AccelFsr;                                  // FSR code for the accel
 
     //  GD20HM303D
 

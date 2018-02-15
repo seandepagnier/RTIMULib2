@@ -21,25 +21,25 @@
 //  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-//  The MPU-9255 and SPI driver code is based on code generously supplied by
+//  The MPU-9250/MPI-9255 and SPI driver code is based on code generously supplied by
 //  staslock@gmail.com (www.clickdrive.io)
 
 
-#ifndef _RTIMUMPU9255_H
-#define	_RTIMUMPU9255_H
+#ifndef _RTIMUMPU925x_H
+#define	_RTIMUMPU925x_H
 
 #include "RTIMU.h"
 
 //  FIFO transfer size
 
-#define MPU9255_FIFO_CHUNK_SIZE     18                      // gyro and accels take 12 bytes
+#define MPU925x_FIFO_CHUNK_SIZE     18                      // gyro and accels take 12 bytes
 
 
-class RTIMUMPU9255 : public RTIMU
+class RTIMUMPU925x : public RTIMU
 {
 public:
-    RTIMUMPU9255(RTIMUSettings *settings);
-    ~RTIMUMPU9255();
+    RTIMUMPU925x(RTIMUSettings *settings);
+    ~RTIMUMPU925x();
 
     bool setGyroLpf(unsigned char lpf);
     bool setAccelLpf(unsigned char lpf);
@@ -48,8 +48,8 @@ public:
     bool setGyroFsr(unsigned char fsr);
     bool setAccelFsr(unsigned char fsr);
 
-    virtual const char *IMUName() { return "MPU-9255"; }
-    virtual int IMUType() { return RTIMU_TYPE_MPU9255; }
+    virtual const char *IMUName() { return "MPU-925x"; }
+    virtual int IMUType() { return RTIMU_TYPE_MPU925x; }
     virtual bool IMUInit();
     virtual bool IMURead();
     virtual int IMUGetPollInterval();
@@ -80,17 +80,6 @@ private:
 
     RTFLOAT m_gyroScale;
     RTFLOAT m_accelScale;
-
-
-#ifdef MPU9255_CACHE_MODE
-
-    MPU9255_CACHE_BLOCK m_cache[MPU9255_CACHE_BLOCK_COUNT]; // the cache itself
-    int m_cacheIn;                                          // the in index
-    int m_cacheOut;                                         // the out index
-    int m_cacheCount;                                       // number of used cache blocks
-
-#endif
-
 };
 
-#endif // _RTIMUMPU9255_H
+#endif // _RTIMUMPU925x_H

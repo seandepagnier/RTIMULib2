@@ -29,8 +29,7 @@
 
 #include "RTIMUSettings.h"
 #include "IMUDrivers/RTIMUMPU9150.h"
-#include "IMUDrivers/RTIMUMPU9250.h"
-#include "IMUDrivers/RTIMUMPU9255.h"
+#include "IMUDrivers/RTIMUMPU925x.h"
 #include "IMUDrivers/RTIMUGD20HM303D.h"
 #include "IMUDrivers/RTIMUGD20M303DLHC.h"
 #include "IMUDrivers/RTIMUGD20HM303DLHC.h"
@@ -82,17 +81,11 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
     if (HALOpen()) {
 
         if (HALRead(MPU9150_ADDRESS0, MPU9150_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9255_ID) {
-                imuType = RTIMU_TYPE_MPU9255;
-                slaveAddress = MPU9255_ADDRESS0;
+            if (result == MPU9250_ID || result == MPU9255_ID) {
+                imuType = RTIMU_TYPE_MPU925x;
+                slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = true;
-                HAL_INFO("Detected MPU9255 at standard address\n");
-                return true;
-            } else if (result == MPU9250_ID) {
-                imuType = RTIMU_TYPE_MPU9250;
-                slaveAddress = MPU9250_ADDRESS0;
-                busIsI2C = true;
-                HAL_INFO("Detected MPU9250 at standard address\n");
+                HAL_INFO("Detected MPU9250/MPU9255 at standard address\n");
                 return true;
             } else if (result == MPU9150_ID) {
                 imuType = RTIMU_TYPE_MPU9150;
@@ -104,17 +97,11 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
         }
 
         if (HALRead(MPU9150_ADDRESS1, MPU9150_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9255_ID) {
-                imuType = RTIMU_TYPE_MPU9255;
-                slaveAddress = MPU9255_ADDRESS1;
+            if (result == MPU9250_ID || result == MPU9255_ID) {
+                imuType = RTIMU_TYPE_MPU925x;
+                slaveAddress = MPU925x_ADDRESS1;
                 busIsI2C = true;
-                HAL_INFO("Detected MPU9255 at option address\n");
-                return true;
-            } else if (result == MPU9250_ID) {
-                imuType = RTIMU_TYPE_MPU9250;
-                slaveAddress = MPU9250_ADDRESS1;
-                busIsI2C = true;
-                HAL_INFO("Detected MPU9250 at option address\n");
+                HAL_INFO("Detected MPU9250/MPU9255 at option address\n");
                 return true;
             } else if (result == MPU9150_ID) {
                 imuType = RTIMU_TYPE_MPU9150;
@@ -413,18 +400,12 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
     m_SPISelect = 0;
 
     if (HALOpen()) {
-        if (HALRead(MPU9250_ADDRESS0, MPU9250_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9255_ID) {
-                imuType = RTIMU_TYPE_MPU9255;
-                slaveAddress = MPU9255_ADDRESS0;
+        if (HALRead(MPU925x_ADDRESS0, MPU925x_WHO_AM_I, 1, &result, "")) {
+            if (result == MPU9250_ID || result == MPU9255_ID) {
+                imuType = RTIMU_TYPE_MPU925x;
+                slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = false;
-                HAL_INFO("Detected MPU9255 on SPI bus 0, select 0\n");
-                return true;
-            } else if (result == MPU9250_ID) {
-                imuType = RTIMU_TYPE_MPU9250;
-                slaveAddress = MPU9250_ADDRESS0;
-                busIsI2C = false;
-                HAL_INFO("Detected MPU9250 on SPI bus 0, select 0\n");
+                HAL_INFO("Detected MPU9250/MPU9255 on SPI bus 0, select 0\n");
                 return true;
             }
         }
@@ -434,18 +415,12 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
     m_SPISelect = 1;
 
     if (HALOpen()) {
-        if (HALRead(MPU9250_ADDRESS0, MPU9250_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9255_ID) {
-                imuType = RTIMU_TYPE_MPU9255;
-                slaveAddress = MPU9250_ADDRESS0;
+        if (HALRead(MPU925x_ADDRESS0, MPU925x_WHO_AM_I, 1, &result, "")) {
+            if (result == MPU9250_ID || result == MPU9255_ID) {
+                imuType = RTIMU_TYPE_MPU925x;
+                slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = false;
-                HAL_INFO("Detected MPU9255 on SPI bus 0, select 1\n");
-                return true;
-            } else if (result == MPU9250_ID) {
-                imuType = RTIMU_TYPE_MPU9250;
-                slaveAddress = MPU9250_ADDRESS0;
-                busIsI2C = false;
-                HAL_INFO("Detected MPU9250 on SPI bus 0, select 1\n");
+                HAL_INFO("Detected MPU9250/MPU9255 on SPI bus 0, select 1\n");
                 return true;
             }
         }
@@ -605,23 +580,14 @@ void RTIMUSettings::setDefaults()
     m_MPU9150GyroFsr = MPU9150_GYROFSR_1000;
     m_MPU9150AccelFsr = MPU9150_ACCELFSR_8;
 
-    //  MPU9250 defaults
+    //  MPU9250 / MPU9255 defaults
 
-    m_MPU9250GyroAccelSampleRate = 80;
-    m_MPU9250CompassSampleRate = 40;
-    m_MPU9250GyroLpf = MPU9250_GYRO_LPF_41;
-    m_MPU9250AccelLpf = MPU9250_ACCEL_LPF_41;
-    m_MPU9250GyroFsr = MPU9250_GYROFSR_1000;
-    m_MPU9250AccelFsr = MPU9250_ACCELFSR_8;
-
-    //  MPU9255 defaults
-
-    m_MPU9255GyroAccelSampleRate = 100;
-    m_MPU9255CompassSampleRate = 100;
-    m_MPU9255GyroLpf = MPU9255_GYRO_LPF_41;
-    m_MPU9255AccelLpf = MPU9255_ACCEL_LPF_41;
-    m_MPU9255GyroFsr = MPU9255_GYROFSR_250;
-    m_MPU9255AccelFsr = MPU9255_ACCELFSR_2;
+    m_MPU925xGyroAccelSampleRate = 100;
+    m_MPU925xCompassSampleRate = 100;
+    m_MPU925xGyroLpf = MPU925x_GYRO_LPF_41;
+    m_MPU925xAccelLpf = MPU925x_ACCEL_LPF_41;
+    m_MPU925xGyroFsr = MPU925x_GYROFSR_250;
+    m_MPU925xAccelFsr = MPU925x_ACCELFSR_2;
 
     //  GD20HM303D defaults
 
@@ -890,35 +856,20 @@ bool RTIMUSettings::loadSettings()
         } else if (strcmp(key, RTIMULIB_MPU9150_ACCEL_FSR) == 0) {
             m_MPU9150AccelFsr = atoi(val);
 
-        //  MPU9250 settings
+        //  MPU9250/MPU9255 settings
 
-        } else if (strcmp(key, RTIMULIB_MPU9250_GYROACCEL_SAMPLERATE) == 0) {
-            m_MPU9250GyroAccelSampleRate = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9250_COMPASS_SAMPLERATE) == 0) {
-            m_MPU9250CompassSampleRate = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9250_GYRO_LPF) == 0) {
-            m_MPU9250GyroLpf = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9250_ACCEL_LPF) == 0) {
-            m_MPU9250AccelLpf = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9250_GYRO_FSR) == 0) {
-            m_MPU9250GyroFsr = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9250_ACCEL_FSR) == 0) {
-            m_MPU9250AccelFsr = atoi(val);
-
-        //  MPU9255 settings
-
-        } else if (strcmp(key, RTIMULIB_MPU9255_GYROACCEL_SAMPLERATE) == 0) {
-            m_MPU9255GyroAccelSampleRate = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9255_COMPASS_SAMPLERATE) == 0) {
-            m_MPU9255CompassSampleRate = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9255_GYRO_LPF) == 0) {
-            m_MPU9255GyroLpf = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9255_ACCEL_LPF) == 0) {
-            m_MPU9255AccelLpf = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9255_GYRO_FSR) == 0) {
-            m_MPU9255GyroFsr = atoi(val);
-        } else if (strcmp(key, RTIMULIB_MPU9255_ACCEL_FSR) == 0) {
-            m_MPU9255AccelFsr = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_GYROACCEL_SAMPLERATE) == 0) {
+            m_MPU925xGyroAccelSampleRate = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_COMPASS_SAMPLERATE) == 0) {
+            m_MPU925xCompassSampleRate = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_GYRO_LPF) == 0) {
+            m_MPU925xGyroLpf = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_ACCEL_LPF) == 0) {
+            m_MPU925xAccelLpf = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_GYRO_FSR) == 0) {
+            m_MPU925xGyroFsr = atoi(val);
+        } else if (strcmp(key, RTIMULIB_MPU925x_ACCEL_FSR) == 0) {
+            m_MPU925xAccelFsr = atoi(val);
 
         //  GD20HM303D settings
 
@@ -1091,11 +1042,11 @@ bool RTIMUSettings::saveSettings()
     setComment("  4 = STM L3GD20 + LSM303DLHC");
     setComment("  5 = STM LSM9DS0");
     setComment("  6 = STM LSM9DS1");
-    setComment("  7 = InvenSense MPU-9250");
+    setComment("  7 = InvenSense MPU-9250/MPU-9255");
     setComment("  8 = STM L3GD20H + LSM303DLHC");
     setComment("  9 = Bosch BMX055");
     setComment("  10 = Bosch BNX055");
-    setComment("  11 = InvenSense MPU-9255");
+    setComment("  11 = Old MPU-9255 (don't use)");
     setComment("  12 = STM LSM6DS33 + LIS3MDL");
     setComment("  13 = HMC5883L + ADXL345 + L3G4200D");
     setValue(RTIMULIB_IMU_TYPE, m_imuType);
@@ -1298,22 +1249,22 @@ bool RTIMUSettings::saveSettings()
     setComment("  24 - +/- 16g");
     setValue(RTIMULIB_MPU9150_ACCEL_FSR, m_MPU9150AccelFsr);
 
-    //  MPU-9250 settings
+    //  MPU-9250/MPU-9255 settings
 
     setBlank();
     setComment("#####################################################################");
     setComment("");
-    setComment("MPU-9250 settings");
+    setComment("MPU-9250 / MPU-9255 settings");
     setComment("");
 
     setBlank();
     setComment("Gyro sample rate (between 5Hz and 1000Hz plus 8000Hz and 32000Hz) ");
-    setValue(RTIMULIB_MPU9250_GYROACCEL_SAMPLERATE, m_MPU9250GyroAccelSampleRate);
+    setValue(RTIMULIB_MPU925x_GYROACCEL_SAMPLERATE, m_MPU925xGyroAccelSampleRate);
 
     setBlank();
     setComment("");
     setComment("Compass sample rate (between 1Hz and 100Hz) ");
-    setValue(RTIMULIB_MPU9250_COMPASS_SAMPLERATE, m_MPU9250CompassSampleRate);
+    setValue(RTIMULIB_MPU925x_COMPASS_SAMPLERATE, m_MPU925xCompassSampleRate);
 
     setBlank();
     setComment("");
@@ -1327,7 +1278,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  0x04 - 20Hz, 9.9mS delay");
     setComment("  0x05 - 10Hz, 17.85mS delay");
     setComment("  0x06 - 5Hz, 33.48mS delay");
-    setValue(RTIMULIB_MPU9250_GYRO_LPF, m_MPU9250GyroLpf);
+    setValue(RTIMULIB_MPU925x_GYRO_LPF, m_MPU925xGyroLpf);
 
     setBlank();
     setComment("");
@@ -1340,7 +1291,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  0x04 - 20Hz, 19.80mS delay");
     setComment("  0x05 - 10Hz, 35.70mS delay");
     setComment("  0x06 - 5Hz, 66.96mS delay");
-    setValue(RTIMULIB_MPU9250_ACCEL_LPF, m_MPU9250AccelLpf);
+    setValue(RTIMULIB_MPU925x_ACCEL_LPF, m_MPU925xAccelLpf);
 
     setBlank();
     setComment("");
@@ -1349,7 +1300,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  8  - +/- 500 degress per second");
     setComment("  16 - +/- 1000 degress per second");
     setComment("  24 - +/- 2000 degress per second");
-    setValue(RTIMULIB_MPU9250_GYRO_FSR, m_MPU9250GyroFsr);
+    setValue(RTIMULIB_MPU925x_GYRO_FSR, m_MPU925xGyroFsr);
 
     setBlank();
     setComment("");
@@ -1358,69 +1309,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  8  - +/- 4g");
     setComment("  16 - +/- 8g");
     setComment("  24 - +/- 16g");
-    setValue(RTIMULIB_MPU9250_ACCEL_FSR, m_MPU9250AccelFsr);
-
-    //  MPU-9255 settings
-
-    setBlank();
-    setComment("#####################################################################");
-    setComment("");
-    setComment("MPU-9255 settings");
-    setComment("");
-
-    setBlank();
-    setComment("Gyro sample rate (between 5Hz and 1000Hz plus 8000Hz and 32000Hz) ");
-    setValue(RTIMULIB_MPU9255_GYROACCEL_SAMPLERATE, m_MPU9255GyroAccelSampleRate);
-
-    setBlank();
-    setComment("");
-    setComment("Compass sample rate (between 1Hz and 100Hz) ");
-    setValue(RTIMULIB_MPU9255_COMPASS_SAMPLERATE, m_MPU9255CompassSampleRate);
-
-    setBlank();
-    setComment("");
-    setComment("Gyro low pass filter - ");
-    setComment("  0x11 - 8800Hz, 0.64mS delay");
-    setComment("  0x10 - 3600Hz, 0.11mS delay");
-    setComment("  0x00 - 250Hz, 0.97mS delay");
-    setComment("  0x01 - 184Hz, 2.9mS delay");
-    setComment("  0x02 - 92Hz, 3.9mS delay");
-    setComment("  0x03 - 41Hz, 5.9mS delay");
-    setComment("  0x04 - 20Hz, 9.9mS delay");
-    setComment("  0x05 - 10Hz, 17.85mS delay");
-    setComment("  0x06 - 5Hz, 33.48mS delay");
-    setValue(RTIMULIB_MPU9255_GYRO_LPF, m_MPU9255GyroLpf);
-
-    setBlank();
-    setComment("");
-    setComment("Accel low pass filter - ");
-    setComment("  0x08 - 1130Hz, 0.75mS delay");
-    setComment("  0x00 - 460Hz, 1.94mS delay");
-    setComment("  0x01 - 184Hz, 5.80mS delay");
-    setComment("  0x02 - 92Hz, 7.80mS delay");
-    setComment("  0x03 - 41Hz, 11.80mS delay");
-    setComment("  0x04 - 20Hz, 19.80mS delay");
-    setComment("  0x05 - 10Hz, 35.70mS delay");
-    setComment("  0x06 - 5Hz, 66.96mS delay");
-    setValue(RTIMULIB_MPU9255_ACCEL_LPF, m_MPU9255AccelLpf);
-
-    setBlank();
-    setComment("");
-    setComment("Gyro full scale range - ");
-    setComment("  0  - +/- 250 degress per second");
-    setComment("  8  - +/- 500 degress per second");
-    setComment("  16 - +/- 1000 degress per second");
-    setComment("  24 - +/- 2000 degress per second");
-    setValue(RTIMULIB_MPU9255_GYRO_FSR, m_MPU9255GyroFsr);
-
-    setBlank();
-    setComment("");
-    setComment("Accel full scale range - ");
-    setComment("  0  - +/- 2g");
-    setComment("  8  - +/- 4g");
-    setComment("  16 - +/- 8g");
-    setComment("  24 - +/- 16g");
-    setValue(RTIMULIB_MPU9255_ACCEL_FSR, m_MPU9255AccelFsr);
+    setValue(RTIMULIB_MPU925x_ACCEL_FSR, m_MPU925xAccelFsr);
 
     //  GD20HM303D settings
 
