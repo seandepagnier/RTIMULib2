@@ -161,9 +161,9 @@ void SelectIMUDlg::setSelectAddress(int imuType, int slaveAddress)
             break;
 
         case RTIMU_TYPE_MPU925x:
-            m_selectAddress->addItem("Standard (0x68)", MPU9250_ADDRESS0);
-            m_selectAddress->addItem("Option (0x69)", MPU9250_ADDRESS1);
-            if (slaveAddress == MPU9250_ADDRESS1)
+            m_selectAddress->addItem("Standard (0x68)", MPU925x_ADDRESS0);
+            m_selectAddress->addItem("Option (0x69)", MPU925x_ADDRESS1);
+            if (slaveAddress == MPU925x_ADDRESS1)
                 m_selectAddress->setCurrentIndex(1);
             else
                 m_selectAddress->setCurrentIndex(0);
@@ -247,8 +247,8 @@ void SelectIMUDlg::setSelectAddress(int imuType, int slaveAddress)
         }
     } else {
         switch (imuType) {
-        case RTIMU_TYPE_MPU9250:
-            m_selectAddress->addItem("Standard", MPU9250_ADDRESS0);
+        case RTIMU_TYPE_MPU925x:
+            m_selectAddress->addItem("Standard", MPU925x_ADDRESS0);
             m_selectAddress->setCurrentIndex(0);
             break;
 
