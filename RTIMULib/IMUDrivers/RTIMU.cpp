@@ -331,32 +331,23 @@ void RTIMU::calibrateAverageCompass()
 
 void RTIMU::calibrateAccel()
 {
-    return; // unreliable method
-    
-    if (!getAccelCalibrationValid())
-        return;
-
-    if (m_imuData.accel.x() >= 0)
-        m_imuData.accel.setX(m_imuData.accel.x() / m_settings->m_accelCalMax.x());
-    else
-        m_imuData.accel.setX(m_imuData.accel.x() / -m_settings->m_accelCalMin.x());
-
-    if (m_imuData.accel.y() >= 0)
-        m_imuData.accel.setY(m_imuData.accel.y() / m_settings->m_accelCalMax.y());
-    else
-        m_imuData.accel.setY(m_imuData.accel.y() / -m_settings->m_accelCalMin.y());
-
-    if (m_imuData.accel.z() >= 0)
-        m_imuData.accel.setZ(m_imuData.accel.z() / m_settings->m_accelCalMax.z());
-    else
-        m_imuData.accel.setZ(m_imuData.accel.z() / -m_settings->m_accelCalMin.z());
+    return;
 }
 
 void RTIMU::updateFusion()
 {
     RTIMU_DATA imuData = m_imuData;
 
-        // apply ellipsoid parameters
+    // apply accelerometer calibration
+    if (getAccelCalibrationValid()) {
+        RTVector3 min = m_settings->m_accelCalMin, max = m_settings->m_accelCalMax;
+        RTVector3 b = (min + max) / 2, s = (max - min) / 2;
+        imuData.accel.setX((imuData.accel.x() - b.x()) / s.x());
+        imuData.accel.setY((imuData.accel.y() - b.y()) / s.y());
+        imuData.accel.setZ((imuData.accel.z() - b.z()) / s.z());
+    }
+    
+    // apply ellipsoid parameters
     if (getCompassCalibrationValid() || getRuntimeCompassCalibrationValid()) {
         imuData.compass.setX((imuData.compass.x() - m_compassCalOffset[0]) * m_compassCalScale[0]);
         imuData.compass.setY((imuData.compass.y() - m_compassCalOffset[1]) * m_compassCalScale[1]);

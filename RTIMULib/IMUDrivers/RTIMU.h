@@ -158,7 +158,10 @@ public:
     const RTVector3& getAccel() { return m_imuData.accel; } // get accel data in gs
     const RTVector3& getCompass() { return m_imuData.compass; } // gets compass data in uT
 
-    RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(m_imuData.accel); }
+    RTVector CalibratedAccel() {
+        return m_imuData.accel;
+    }
+    RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(CalibratedAccel()); }
 
 protected:
     void gyroBiasInit();                                    // sets up gyro bias calculation
