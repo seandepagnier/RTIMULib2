@@ -523,6 +523,7 @@ bool RTIMULSM9DS0::IMURead()
     //  sort out compass axes
 
     m_imuData.compass.setY(-m_imuData.compass.y());
+    m_imuData.compass.setZ(-m_imuData.compass.z());
 
     //  now do standard processing
 
