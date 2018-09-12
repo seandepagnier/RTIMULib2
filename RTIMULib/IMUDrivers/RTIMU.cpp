@@ -331,23 +331,51 @@ void RTIMU::calibrateAverageCompass()
 
 void RTIMU::calibrateAccel()
 {
-    return;
+    return; // unreliable method
+    
+    if (!getAccelCalibrationValid())
+        return;
+
+    if (m_imuData.accel.x() >= 0)
+        m_imuData.accel.setX(m_imuData.accel.x() / m_settings->m_accelCalMax.x());
+    else
+        m_imuData.accel.setX(m_imuData.accel.x() / -m_settings->m_accelCalMin.x());
+
+    if (m_imuData.accel.y() >= 0)
+        m_imuData.accel.setY(m_imuData.accel.y() / m_settings->m_accelCalMax.y());
+    else
+        m_imuData.accel.setY(m_imuData.accel.y() / -m_settings->m_accelCalMin.y());
+
+    if (m_imuData.accel.z() >= 0)
+        m_imuData.accel.setZ(m_imuData.accel.z() / m_settings->m_accelCalMax.z());
+    else
+        m_imuData.accel.setZ(m_imuData.accel.z() / -m_settings->m_accelCalMin.z());
+}
+
+RTVector3 RTIMU::CalibratedAccel()
+{
+    RTVector3 accel = m_imuData.accel;
+    // apply accelerometer calibration
+    if (getAccelCalibrationValid()) {
+        RTVector3 min = m_settings->m_accelCalMin, max = m_settings->m_accelCalMax;
+        float b[3] = {(min.x() + max.x()) / 2, (min.y() + max.y()) / 2, (min.z() + max.z()) / 2};
+        float s[3] = {(max.x() - min.x()) / 2, (max.y() - min.y()) / 2, (max.z() - min.z()) / 2};
+        RTVector3 a = accel;
+        accel.setX((accel.x() - b[0]) / s[0]);
+        accel.setY((accel.y() - b[1]) / s[1]);
+        accel.setZ((accel.z() - b[2]) / s[2]);
+        //printf("applied accel %f %f %f %f %f %f \n", a.x(), a.y(), a.z(), accel.x(), accel.y(), accel.z());
+    }
+    return accel;
 }
 
 void RTIMU::updateFusion()
 {
     RTIMU_DATA imuData = m_imuData;
 
-    // apply accelerometer calibration
-    if (getAccelCalibrationValid()) {
-        RTVector3 min = m_settings->m_accelCalMin, max = m_settings->m_accelCalMax;
-        RTVector3 b = (min + max) / 2, s = (max - min) / 2;
-        imuData.accel.setX((imuData.accel.x() - b.x()) / s.x());
-        imuData.accel.setY((imuData.accel.y() - b.y()) / s.y());
-        imuData.accel.setZ((imuData.accel.z() - b.z()) / s.z());
-    }
+    imuData.accel = CalibratedAccel();
     
-    // apply ellipsoid parameters
+        // apply ellipsoid parameters
     if (getCompassCalibrationValid() || getRuntimeCompassCalibrationValid()) {
         imuData.compass.setX((imuData.compass.x() - m_compassCalOffset[0]) * m_compassCalScale[0]);
         imuData.compass.setY((imuData.compass.y() - m_compassCalOffset[1]) * m_compassCalScale[1]);

@@ -158,9 +158,6 @@ public:
     const RTVector3& getAccel() { return m_imuData.accel; } // get accel data in gs
     const RTVector3& getCompass() { return m_imuData.compass; } // gets compass data in uT
 
-    RTVector CalibratedAccel() {
-        return m_imuData.accel;
-    }
     RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(CalibratedAccel()); }
 
 protected:
@@ -168,6 +165,7 @@ protected:
     void handleGyroBias();                                  // adjust gyro for bias
     void calibrateAverageCompass();                         // calibrate and smooth compass
     void calibrateAccel();                                  // calibrate the accelerometers
+    RTVector3 CalibratedAccel();
     void updateFusion();                                    // call when new data to update fusion state
 
     int m_sampleRate;                                       // samples per second
