@@ -73,6 +73,12 @@ public:
 
     RTVector3 getAccelResiduals(RTVector3 accel);
 
+    //  getAccelGlobalFrame() returns the rotated acceleration
+    //  from the sensor Local Coordinate System to the Earth/Global Coordinate System
+    //  useful for inertial navigation systems (like indoor positioning systems)
+
+    RTVector3 getAccelGlobalFrame(RTVector3 accel);
+
     void setDebugEnable(bool enable) { m_debug = enable; }
     void calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination); // generates pose from accels and mag
     

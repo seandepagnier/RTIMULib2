@@ -288,6 +288,14 @@ static PyMethodDef RTIMU_RTIMU_methods[] = {
     METH_NOARGS,
     "Return the accel residual readings" },
 
+    //////// getAccelGlobalFrame
+    {"getAccelGlobalFrame", (PyCFunction)([] (PyObject *self, PyObject* args) -> PyObject* {
+        const RTVector3& r = ((RTIMU_RTIMU*)self)->val->getAccelGlobalFrame();
+        return Py_BuildValue("(d,d,d)", r.x(), r.y(), r.z());
+        }),
+    METH_NOARGS,
+    "Return the accel rotated into the Earth Frame" },
+
     //////// setExtIMUData
     {"setExtIMUData", (PyCFunction)([] (PyObject *self, PyObject* args) -> PyObject* {
         double gx, gy, gz, ax, ay, az, mx, my, mz;
