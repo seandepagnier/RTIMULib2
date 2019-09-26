@@ -166,6 +166,7 @@
 #define MPU925x_ADDRESS1            0x69
 #define MPU9250_ID                  0x71
 #define MPU9255_ID                  0x73
+#define MPU9250_6500_ID             0x78
 
 #define AK8963_ADDRESS              0x0c
 

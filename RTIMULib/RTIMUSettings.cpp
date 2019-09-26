@@ -81,7 +81,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
     if (HALOpen()) {
 
         if (HALRead(MPU9150_ADDRESS0, MPU9150_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9250_ID || result == MPU9255_ID) {
+            if (result == MPU9250_ID || result == MPU9255_ID || result == MPU9250_6500_ID) {
                 imuType = RTIMU_TYPE_MPU925x;
                 slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = true;
@@ -97,7 +97,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
         }
 
         if (HALRead(MPU9150_ADDRESS1, MPU9150_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9250_ID || result == MPU9255_ID) {
+            if (result == MPU9250_ID || result == MPU9255_ID || result == MPU9250_6500_ID) {
                 imuType = RTIMU_TYPE_MPU925x;
                 slaveAddress = MPU925x_ADDRESS1;
                 busIsI2C = true;
@@ -401,7 +401,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
 
     if (HALOpen()) {
         if (HALRead(MPU925x_ADDRESS0, MPU925x_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9250_ID || result == MPU9255_ID) {
+            if (result == MPU9250_ID || result == MPU9255_ID || result == MPU9250_6500_ID) {
                 imuType = RTIMU_TYPE_MPU925x;
                 slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = false;
@@ -416,7 +416,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
 
     if (HALOpen()) {
         if (HALRead(MPU925x_ADDRESS0, MPU925x_WHO_AM_I, 1, &result, "")) {
-            if (result == MPU9250_ID || result == MPU9255_ID) {
+            if (result == MPU9250_ID || result == MPU9255_ID || result == MPU9250_6500_ID) {
                 imuType = RTIMU_TYPE_MPU925x;
                 slaveAddress = MPU925x_ADDRESS0;
                 busIsI2C = false;
