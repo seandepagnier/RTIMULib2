@@ -80,21 +80,6 @@ static PyMethodDef RTIMU_Settings_methods[] = {
     NULL}
 #endif
 
-#if PY_MAJOR_VERSION >= 3
-#define RTIMU_PARAM_FLOAT(name, member)                                      \
-    {(char*)#name,                                                           \
-        (getter)([] (_object* self, void* closure) {                         \
-            return Py_BuildValue("d", ((RTIMU_Settings*)self)->val->member); \
-        }),                                                                  \
-        (setter)([] (_object* self, PyObject *value, void *closure) {        \
-            long d = PyLong_AsLong(value);                                   \
-            if (PyErr_Occurred())                                            \
-                return -1;                                                   \
-            ((RTIMU_Settings*)self)->val->member = d;                        \
-            return 0;                                                        \
-        }),                                                                  \
-    NULL}
-#else
 #define RTIMU_PARAM_FLOAT(name, member)                                      \
     {(char*)#name,                                                           \
         (getter)([] (_object* self, void* closure) {                         \
@@ -108,7 +93,6 @@ static PyMethodDef RTIMU_Settings_methods[] = {
             return 0;                                                        \
         }),                                                                  \
     NULL}
-#endif
 
 #define RTIMU_PARAM_VEC3(name, member)                                       \
     {(char*)#name,                                                           \
