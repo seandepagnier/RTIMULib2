@@ -97,6 +97,7 @@ OBJECTS = objects/RTIMULibDrive.o \
     objects/RTIMUNull.o \
     objects/RTIMUMPU9150.o \
     objects/RTIMUMPU925x.o \
+    objects/RTIMUICM20948.o \
     objects/RTIMUGD20HM303D.o \
     objects/RTIMUGD20M303DLHC.o \
     objects/RTIMUGD20HM303DLHC.o \

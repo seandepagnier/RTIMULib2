@@ -29,29 +29,9 @@
 
 //  Define this symbol to use cache mode
 
-// #define ICM20948_CACHE_MODE
-
 //  FIFO transfer size
 
 #define ICM20948_FIFO_CHUNK_SIZE     12                      // gyro and accels take 12 bytes
-
-#ifdef ICM20948_CACHE_MODE
-
-//  Cache mode defines
-
-#define ICM20948_CACHE_SIZE          16                      // number of chunks in a block
-#define ICM20948_CACHE_BLOCK_COUNT   16                      // number of cache blocks
-
-typedef struct
-{
-    unsigned char data[ICM20948_FIFO_CHUNK_SIZE * ICM20948_CACHE_SIZE];
-    int count;                                              // number of chunks in the cache block
-    int index;                                              // current index into the cache
-    unsigned char compass[8];                               // the raw compass readings for the block
-
-} ICM20948_CACHE_BLOCK;
-
-#endif
 
 
 class RTIMUICM20948 : public RTIMU
@@ -71,7 +51,7 @@ public:
 
     bool trigger_mag_io();
     bool mag_write(uint8_t reg, uint8_t value);
-    bool mag_read_bytes(uint8_t reg, unsigned char* data, uint8_t length=1);
+    bool mag_read_bytes(unsigned char* data, uint8_t length=1);
     uint8_t mag_read(uint8_t reg);
     bool magnetometer_ready();
 

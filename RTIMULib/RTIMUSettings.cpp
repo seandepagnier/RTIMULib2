@@ -463,7 +463,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                 imuType = RTIMU_TYPE_ICM20948;
                 slaveAddress = ICM20948_ADDRESS0;
                 busIsI2C = false;
-                HAL_INFO("Detected ICM20948 on SPI bus 0, select 0\n");
+                HAL_INFO("Detected ICM20948 on SPI bus 0, select 1\n");
                 return true;
             }
         }
@@ -638,8 +638,8 @@ void RTIMUSettings::setDefaults()
     m_ICM20948CompassSampleRate = 100;
     m_ICM20948GyroLpf = ICM20948_GYRO_LPF_51_2;
     m_ICM20948AccelLpf = ICM20948_ACCEL_LPF_50_4;
-    m_ICM20948GyroFsr = ICM20948_GYROFSR_1000;
-    m_ICM20948AccelFsr = ICM20948_ACCELFSR_8;
+    m_ICM20948GyroFsr = ICM20948_GYROFSR_250;
+    m_ICM20948AccelFsr = ICM20948_ACCELFSR_2;
 
     //  GD20HM303D defaults
 

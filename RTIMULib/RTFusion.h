@@ -51,8 +51,8 @@ public:
     //  the fusion fields are updated with the results
 
     virtual void newIMUData(RTIMU_DATA& /* data */, const RTIMUSettings * /* settings */) {}
-    virtual void gyroBiasInit(float samplerate) {}
-    virtual void handleGyroBias(RTIMU_DATA&, RTIMUSettings *settings) {}
+    virtual void gyroBiasInit(float) {}
+    virtual void handleGyroBias(RTIMU_DATA&, RTIMUSettings *) {}
 
     //  This static function returns performs the type to name mapping
 
