@@ -400,6 +400,7 @@ public:
     int m_LSM6DS33LIS3MDLCompassPowerMode;                  // the compass power mode
 
 private:
+    bool Detect_ICM20948(uint8_t slaveAddress);
     void setBlank();
     void setComment(const char *comment);
     void setValue(const char *key, const bool val);

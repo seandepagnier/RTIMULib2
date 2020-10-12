@@ -79,7 +79,7 @@ private:
 
     unsigned char m_slaveAddr;                              // I2C address of ICM20948
 
-    uint8_t m_reg_bank = 0;                                     // last selected register bank
+    uint8_t m_reg_bank = 255;                                     // last selected register bank
 
     unsigned char m_gyroLpf;                                // gyro low pass filter setting
     unsigned char m_accelLpf;                               // accel low pass filter setting

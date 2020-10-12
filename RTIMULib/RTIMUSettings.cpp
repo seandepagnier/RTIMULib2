@@ -68,7 +68,6 @@ RTIMUSettings::RTIMUSettings(const char *settingsDirectory, const char *productT
     loadSettings();
 }
 
-
 bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& slaveAddress)
 {
     unsigned char result;
@@ -112,23 +111,20 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
             }
         }
 
-        if (HALRead(ICM20948_ADDRESS0, ICM20948_WHO_AM_I, 1, &result, "")) {
-            if (result == ICM20948_ID) {
-                imuType = RTIMU_TYPE_ICM20948;
-                slaveAddress = ICM20948_ADDRESS0;
-                busIsI2C = true;
-                HAL_INFO("Detected ICM20948 at standard address\n");
-                return true;
-            }
+        if (Detect_ICM20948(ICM20948_ADDRESS0)) {
+            imuType = RTIMU_TYPE_ICM20948;
+            slaveAddress = ICM20948_ADDRESS0;
+            busIsI2C = true;
+            HAL_INFO("Detected ICM20948 at standard address\n");
+            return true;
         }
-        if (HALRead(ICM20948_ADDRESS1, ICM20948_WHO_AM_I, 1, &result, "")) {
-            if (result == ICM20948_ID) {
-                imuType = RTIMU_TYPE_ICM20948;
-                slaveAddress = ICM20948_ADDRESS1;
-                busIsI2C = true;
-                HAL_INFO("Detected ICM20948 at option address\n");
-                return true;
-            }
+
+        if (Detect_ICM20948(ICM20948_ADDRESS1)) {
+            imuType = RTIMU_TYPE_ICM20948;
+            slaveAddress = ICM20948_ADDRESS1;
+            busIsI2C = true;
+            HAL_INFO("Detected ICM20948 at option address\n");
+            return true;
         }
 
         if (HALRead(L3GD20H_ADDRESS0, L3GD20H_WHO_AM_I, 1, &result, "")) {
@@ -2043,6 +2039,33 @@ bool RTIMUSettings::saveSettings()
 
     fclose(m_fd);
     return true;
+}
+
+bool RTIMUSettings::Detect_ICM20948(uint8_t slaveAddress)
+{
+    // to read WHO AM I, we need to ensure we are on the right register bank
+    uint8_t bank;
+    if (!HALRead(slaveAddress, ICM20948_REG_BANK_SEL, 1, &bank, ""))
+        return false;
+        
+    if(bank != ICM20948_BANK0) {
+        // wrong bank..   We have to write the bank 0 here, so far I don't know any
+        // alternate devices which use 0x7f address for anything meaningful, but if
+        // they exist, they should be detected before the ICM20948!
+        if (!HALWrite(slaveAddress, ICM20948_REG_BANK_SEL, ICM20948_BANK0, "Failed to write bank select"))
+            return false;
+    }
+
+    uint8_t result;
+    if (HALRead(ICM20948_ADDRESS0, ICM20948_WHO_AM_I, 1, &result, "")) {
+        if (result == ICM20948_ID)
+            return true;
+
+        // wrong device.. oops!  try to write previous value back
+        if(bank != ICM20948_BANK0)
+            HALWrite(slaveAddress, ICM20948_REG_BANK_SEL, bank, "Failed to write bank select back to previous value");
+    }
+    return false;
 }
 
 void RTIMUSettings::setBlank()
