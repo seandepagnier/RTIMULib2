@@ -50,7 +50,6 @@ public:
 
     bool trigger_mag_io();
     bool mag_write(uint8_t reg, uint8_t value);
-    bool mag_read_bytes(unsigned char* data, uint8_t length=1);
     uint8_t mag_read(uint8_t reg);
 
     virtual const char *IMUName() { return "ICM-20948"; }

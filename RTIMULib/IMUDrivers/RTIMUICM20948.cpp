@@ -403,7 +403,7 @@ uint8_t RTIMUICM20948::mag_read(uint8_t reg)
     
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_ADDR, AK09916_I2C_ADDR | 0x80, "Failed to set magnetometer as slave")) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_REG, reg, "Failed to set magnetometer reg to slave")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_DO, 0xff, "Failed to set magnetometer reg value to slave")) return false;
+//    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_DO, 0xff, "Failed to set magnetometer reg value to slave")) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_CTRL, 0x80 | 1, "Failed to set magnetometer reg value to slave")) return false;
 
     trigger_mag_io();
@@ -411,11 +411,6 @@ uint8_t RTIMUICM20948::mag_read(uint8_t reg)
     uint8_t b = 0xff;
     m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, 1, &b, "Failed to read compass data");
     return b;
-}
-bool RTIMUICM20948::mag_read_bytes(unsigned char* data, uint8_t length)
-{
-    m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, length, data, "Failed to read compass data");
-    return true;
 }
 
 
@@ -475,46 +470,61 @@ bool RTIMUICM20948::bypassOff()
 
 bool RTIMUICM20948::compassSetup()
 {
-    if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    uint8_t userControl;
-    if (!m_settings->HALRead(m_slaveAddr, ICM20948_USER_CTRL, 1, &userControl, "Failed to read user_ctrl reg")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, userControl | 0x02, "Failed to set user_ctrl reg")) return false;
-    m_settings->delayMs(5);
-
-
     if (!SelectRegisterBank(ICM20948_BANK3)) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_CTRL, 0x08, "Failed to set I2C master mode")) return false;
 
-    // soft reset
-    mag_write(AK09916_CNTL3, 0x01);
-    m_settings->delayMs(100);
+    // soft reset, reading writing with mag_read and mag_write is not completely
+    // reliable...  a few retries may be needed to ensure these work but they are only
+    // needed during setup so not a big deal, it may be better to use bypass
+    int retries = 0;
+    for(;;) {
+        if (!SelectRegisterBank(ICM20948_BANK0)) return false;
+        if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x2, "Failed to set user_ctrl reg")) return false;
+        mag_write(AK09916_CNTL3, 0x01);
 
-    if(mag_read(AK09916_WHO_AM_I) != 9) {
-        printf("ICM20948 has AK09916 wrong ID!\n");
-        return false;
+        uint8_t id = mag_read(AK09916_WHO_AM_I);
+        if(id == 9)
+            break;
+
+        if(retries++ > 10) {
+            printf("ICM20948 has AK09916 wrong ID! %x\n", id);
+            return false;
+        }
+ 
+        // reset i2c bus and try again...
+     }
+
+    // ensure rate is set
+    uint8_t rate = 0;
+    for(;;) {
+        rate = mag_read(AK09916_CNTL2);
+        if(rate == 8)
+            break;
+        mag_write(AK09916_CNTL2, 0x8);
+        m_settings->delayMs(100);
+
+        if(retries++ > 10) {
+            printf("AK09916 failed to set rate!!!!!\n");
+            break;
+        }
     }
-
-    uint8_t rate = 0b1000; // continuous 100hz    if (m_compassRate <= 10)
-    if (m_compassRate <= 10)
-        rate = 0b0010; // continuous 10hz
-    else if (m_compassRate <= 20)
-        rate = 0b0100; // continuous 20hz
-    else if (m_compassRate <= 50)
-        rate = 0b0110; // continuous 50hz
-    
-    mag_write(AK09916_CNTL2, 0x8);
-    
-    m_settings->delayMs(100);
     
     if (!SelectRegisterBank(ICM20948_BANK3)) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_ADDR, AK09916_I2C_ADDR | 0x80/*read*/, "Failed to set slave 0 address")) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_REG, AK09916_ST1+1, "Failed to set slave 0 reg")) return false;
+
+    // read 8 bytes reads the 3 axes, 0 register and status register
+    // maybe... could use SLV1 for status and a single byte, and possibly not store it in the fifo using REG_DIS?  this is simpler, and plenty of fifo space, but slightly more data: 20 bytes per sample instead of 18 or 19
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_CTRL, 0x88, "Failed to set slave 0 ctrl")) return false;
 
+    // needed to ensure correct data if reading without fifo
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_DELAY_CTRL, 0x81, "Failed to set mst delay"))
+        return false;
+    
     m_settings->delayMs(5);
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    if (!m_settings->HALRead(m_slaveAddr, ICM20948_USER_CTRL, 1, &userControl, "Failed to read user_ctrl reg")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, userControl | 0x22, "Failed to set user_ctrl reg")) return false;
+    uint8_t userControl;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x22, "Failed to set user_ctrl reg")) return false;
     m_settings->delayMs(5);
 
     return true;
@@ -623,8 +633,6 @@ bool RTIMUICM20948::IMURead()
 
     // x fwd y right z down
 
-
-
     //  now do standard processing
 
     handleGyroBias();
@@ -644,9 +652,6 @@ bool RTIMUICM20948::IMURead()
 
     updateFusion();
     
-    if (!SelectRegisterBank(ICM20948_BANK0))
-        return false;
-
     return true;
 }
 

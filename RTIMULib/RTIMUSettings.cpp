@@ -2057,7 +2057,7 @@ bool RTIMUSettings::Detect_ICM20948(uint8_t slaveAddress)
     }
 
     uint8_t result;
-    if (HALRead(ICM20948_ADDRESS0, ICM20948_WHO_AM_I, 1, &result, "")) {
+    if (HALRead(slaveAddress, ICM20948_WHO_AM_I, 1, &result, "")) {
         if (result == ICM20948_ID)
             return true;
 
