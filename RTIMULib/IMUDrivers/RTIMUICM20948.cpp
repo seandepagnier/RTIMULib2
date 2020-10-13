@@ -230,11 +230,21 @@ bool RTIMUICM20948::IMUInit()
     // DEVICE_RESET
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_PWR_MGMT_1, 0x80, "Failed to initiate ICM20948 reset"))
         return false;
+
     m_settings->delayMs(100);
+
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_PWR_MGMT_1, 0x01, "Failed to stop ICM20948 reset"))
         return false;
 
+    uint8_t result;
+    if (!m_settings->HALRead(m_slaveAddr, ICM20948_WHO_AM_I, 1, &result, "Failed to read ICM20948 id"))
+        return false;
 
+    if (result != ICM20948_ID) {
+        HAL_ERROR2("Incorrect %s id %d\n", IMUName(), result);
+        return false;
+    }
+    
     //  now configure the various components
 
     if (!setGyroConfig())
@@ -243,13 +253,16 @@ bool RTIMUICM20948::IMUInit()
     if (!setAccelConfig())
         return false;
 
-    if (!setSampleRate())
-        return false;
-
     if(!compassSetup())
         return false;
     
+    if (!setSampleRate())
+        return false;
+
     gyroBiasInit();
+
+    if (!resetFifo())
+        return false;
 
     HAL_INFO1("%s init complete\n", IMUName());
     return true;
@@ -260,7 +273,6 @@ bool RTIMUICM20948::resetFifo()
 {
     if (!SelectRegisterBank(ICM20948_BANK0))
         return false;
-    
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_ENABLE, 0, "Writing int enable"))
         return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_1, 0, "Writing fifo enable"))
@@ -270,25 +282,20 @@ bool RTIMUICM20948::resetFifo()
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0, "Writing user control"))
         return false;
 
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x04, "Resetting fifo"))
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_RST, 0x01, "Resetting fifo"))
+        return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_RST, 0x00, "Resetting fifo"))
+        return false;
+
+
+    m_settings->delayMs(50);
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_1, 0x01, "Failed to set FIFO enables"))
+        return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_2, 0x1e, "Failed to set FIFO enables"))
         return false;
 
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x60, "Enabling the fifo"))
         return false;
-
-    m_settings->delayMs(50);
-
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_PIN_CFG, 0x22, "Writing int enable"))
-        return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_ENABLE_1, 0x01, "Writing int enable"))
-        return false;
-
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_1, 0x00, "Failed to set FIFO enables"))
-        return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_2, 0b00011110, "Failed to set FIFO enables"))
-        return false;
-
     return true;
 }
 
@@ -306,12 +313,14 @@ bool RTIMUICM20948::setGyroConfig()
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_SMPLRT_DIV, rate, "Failed to write gyro sample rate"))
         return false;
         
-    value = 0;
-    value |= (m_gyroLpf & 0x07) << 3;
+    value = (/*m_gyroLpf*/ 3 & 0x07) << 3;
     value |= m_gyroFsr << 1; // gyro fsr
-    if (m_gyroLpf != ICM20948_GYRO_LPF_BYPASS)
-        value |= 0b1; // enable lpf
+    value |= 1; // enable lpf
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_CONFIG_1, value, "Failed to write gyro config"))
+        return false;
+
+    // TODO: do lower settings have higher noise!?!?  Is 5 ok??
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_CONFIG_2, 4, "Failed to write gyro config"))
         return false;
     
     return true;
@@ -326,21 +335,24 @@ bool RTIMUICM20948::setAccelConfig()
     unsigned char value;
     
     // // accelerometer sample rate
-    // // TODO: handle reserved bits in MSB
+#if 0 // gyro determines output rate
     uint16_t rate = (1125.0 / m_sampleRate) - 1;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_ACCEL_SMPLRT_DIV_1, (rate >> 8) & 0xFF, "Failed to write accelerometer MSB sample rate"))
         return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_ACCEL_SMPLRT_DIV_2, rate & 0xFF, "Failed to write accelerometer LSB sample rate"))
         return false;
+#endif
         
     // accelerometer fsr
     value = (m_accelFsr << 1);
-    value |= 0b1; // enable lpf
-    value |= (m_accelLpf & 0x07) << 3; // TODO: report bug in pimoroni
-    //std::cout << "setting ACCEL_CONFIG to " << std::bitset<8>(value) << std::endl;
+    value |= (/*m_accelLpf*/ 3 & 0x07) << 3; // TODO: report bug in pimoroni
+    value |= 1; // enable lpf
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_ACCEL_CONFIG, value, "Failed to write accelerometer config"))
         return false;
 
+    // TODO: play with this
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_ACCEL_CONFIG_2, 0, "Failed to write accelerometer config"))
+        return false;
     return true;
 }
 
@@ -348,11 +360,11 @@ bool RTIMUICM20948::setSampleRate()
 {
     // if (m_sampleRate > 1000)
     //     return true;                                        // SMPRT not used above 1000Hz
-
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_SMPRT_DIV, (unsigned char) (1000 / m_sampleRate - 1),
-    //         "Failed to set sample rate"))
-    //     return false;
-
+#if 0
+    if (!SelectRegisterBank(ICM20948_BANK0)) return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_LP_CONFIG, 0x00, "Failed to set sample rate"))
+        return false;
+#endif
     return true;
 }
 
@@ -404,9 +416,6 @@ bool RTIMUICM20948::mag_read_bytes(unsigned char* data, uint8_t length)
 {
     m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, length, data, "Failed to read compass data");
     return true;
-}
-bool RTIMUICM20948::magnetometer_ready() {
-    return (mag_read(AK09916_ST1) & 0x01) > 0;
 }
 
 
@@ -477,19 +486,15 @@ bool RTIMUICM20948::compassSetup()
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_CTRL, 0x08, "Failed to set I2C master mode")) return false;
 
     // soft reset
-    for(;;) {
-        mag_write(AK09916_CNTL3, 0x01);
-        m_settings->delayMs(100);
+    mag_write(AK09916_CNTL3, 0x01);
+    m_settings->delayMs(100);
 
-        if(mag_read(AK09916_WHO_AM_I) == 9)
-            break;
-
-        // reset i2c bus and try again...
-        if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x2, "Failed to set user_ctrl reg")) return false;
-        m_settings->delayMs(5);
+    if(mag_read(AK09916_WHO_AM_I) != 9) {
+        printf("ICM20948 has AK09916 wrong ID!\n");
+        return false;
     }
 
-    uint8_t rate = 0b1000; // continuous 100hz
+    uint8_t rate = 0b1000; // continuous 100hz    if (m_compassRate <= 10)
     if (m_compassRate <= 10)
         rate = 0b0010; // continuous 10hz
     else if (m_compassRate <= 20)
@@ -497,8 +502,6 @@ bool RTIMUICM20948::compassSetup()
     else if (m_compassRate <= 50)
         rate = 0b0110; // continuous 50hz
     
-    // mag_write(AK09916_CNTL2, 0b0001); // single measurement mode
-
     mag_write(AK09916_CNTL2, 0x8);
     
     m_settings->delayMs(100);
@@ -506,13 +509,8 @@ bool RTIMUICM20948::compassSetup()
     if (!SelectRegisterBank(ICM20948_BANK3)) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_ADDR, AK09916_I2C_ADDR | 0x80/*read*/, "Failed to set slave 0 address")) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_REG, AK09916_ST1+1, "Failed to set slave 0 reg")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_CTRL, 0x86, "Failed to set slave 0 ctrl")) return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_CTRL, 0x88, "Failed to set slave 0 ctrl")) return false;
 
-
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV1_ADDR, AK09916_I2C_ADDR | 0x80/*read*/, "Failed to set slave 0 address")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV1_REG, AK09916_ST2, "Failed to set slave 0 reg")) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV1_CTRL, 0x81, "Failed to set slave 0 ctrl")) return false;
-    
     m_settings->delayMs(5);
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
     if (!m_settings->HALRead(m_slaveAddr, ICM20948_USER_CTRL, 1, &userControl, "Failed to read user_ctrl reg")) return false;
@@ -532,33 +530,82 @@ int RTIMUICM20948::IMUGetPollInterval()
 
 bool RTIMUICM20948::IMURead()
 {
-    unsigned char fifoData[12];
-    unsigned char compassData[6];
+    unsigned char fifoCount[2];
+    unsigned char fifoData[400];
+    unsigned int count;
 
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    if (!m_settings->HALRead(m_slaveAddr, ICM20948_ACCEL_XOUT_H, ICM20948_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
+    if (!m_settings->HALRead(m_slaveAddr, ICM20948_FIFO_COUNTH, 2, fifoCount, "Failed to read fifo count")) {
+        return false;
+    }
+    
+    count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
+    if (count < ICM20948_FIFO_CHUNK_SIZE)
         return false;
 
-    unsigned char x[9];
-    mag_read_bytes(x, 6);
-    memcpy(compassData, x, 6);
+    if (count > 512) {
+        HAL_INFO("ICM20948 fifo has overflowed\n");
+        HAL_INFO("ICM20948 trying to reinitialize sensors\n");
+        IMUInit();
+        return false;
+    }
 
-    // if (!SelectRegisterBank(ICM20948_BANK2))
-    //     return false;
-    // uint8_t a_scale;
-    // if (!m_settings->HALRead(m_slaveAddr, ICM20948_ACCEL_CONFIG, 1, &a_scale, "Failed to read fifo data"))
-    //     return false;
-    // a_scale = (a_scale & 0x06) >> 1;
-    // RTMath::convertToVector(fifoData, m_imuData.accel, ACCELFSR_MAP.at(a_scale), true);
+    if (count >= 512) {
+        // is this even possible?
+        HAL_INFO("ICM20948 fifo count invalid!!\n");
+        resetFifo();
+        return false;
+    }
+
+    if (count > 400) {
+        HAL_INFO("ICM20948 fifo has more than 20 samples!!\n");
+        count = 400;
+    }
     
-    RTMath::convertToVector(fifoData, m_imuData.accel, m_accelScale, true);
-    RTMath::convertToVector(fifoData + 6, m_imuData.gyro, m_gyroScale, true);
-    RTMath::convertToVector(compassData, m_imuData.compass, 0.15f, false);
+    count /= ICM20948_FIFO_CHUNK_SIZE;
+    // read fifo data in two reads if more than 10 samples
+    int roffset = 0;
+    int fcount = count;
+    if (count > 10) {
+        if (!m_settings->HALRead(m_slaveAddr, ICM20948_FIFO_R_W, ICM20948_FIFO_CHUNK_SIZE*10, fifoData, "Failed to read fifo data"))
+            return false;
+        fcount = count - 10;
+        roffset = ICM20948_FIFO_CHUNK_SIZE*10;
+    }
+    if (!m_settings->HALRead(m_slaveAddr, ICM20948_FIFO_R_W, fcount*ICM20948_FIFO_CHUNK_SIZE, fifoData+roffset, "Failed to read fifo data"))
+        return false;
 
-    std::cout << "GYRO: " << m_imuData.gyro.x() << " " << m_imuData.gyro.y() << " " << m_imuData.gyro.z() << " " <<  std::endl;
-    std::cout << "ACCEL: " << "  " << m_imuData.accel.x() << " " << m_imuData.accel.y() << " " << m_imuData.accel.z() << " " <<  std::endl;
-    // std::cout << "MAG: " << int(compassData[3]) <<  std::endl;
-    std::cout << "MAG: " << "  " << m_imuData.compass.x() << " " << m_imuData.compass.y() << " " << m_imuData.compass.z() << " " <<  std::endl;
+    RTVector3 accel_t, gyro_t, compass_t;
+    unsigned char *p = fifoData;
+
+    int compass_count = 0;
+//    printf("count %d %x %x\n", count, fifoCount[0], fifoCount[1]);
+    for(uint8_t i=0; i<count; i++) {
+        RTVector3 accel, gyro, compass;
+        RTMath::convertToVector(p,    accel, m_accelScale, true);
+        RTMath::convertToVector(p+6,  gyro, m_gyroScale, true);
+        RTMath::convertToVector(p+12, compass, .6, false);
+
+        accel_t += accel;
+        gyro_t += gyro;
+
+        if(!(p[19] & 0x08))
+        { // compass data valid?
+            compass_t += compass;
+            compass_count++;
+        }
+        p += ICM20948_FIFO_CHUNK_SIZE;
+    }
+
+    if(compass_count == 0)
+        return false;
+
+    // average samples
+    for(int i=0; i<3; i++) {
+        m_imuData.accel.setData(i, accel_t.data(i)/count);
+        m_imuData.gyro.setData(i, gyro_t.data(i)/count);
+        m_imuData.compass.setData(i, compass_t.data(i)/compass_count);
+    }
    
     //  sort out gyro axes
 

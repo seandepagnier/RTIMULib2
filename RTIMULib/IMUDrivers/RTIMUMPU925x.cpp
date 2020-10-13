@@ -526,8 +526,6 @@ bool RTIMUMPU925x::IMURead()
         HAL_INFO("MPU-925x trying to reinitialize sensors\n");
         IMUInit();
         return false;
-        resetFifo();
-        return false;
     }
 
     if (count >= 512) {
@@ -647,5 +645,3 @@ bool RTIMUMPU925x::IMURead()
 
     return true;
 }
-
-

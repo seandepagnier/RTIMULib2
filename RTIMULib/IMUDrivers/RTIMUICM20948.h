@@ -31,8 +31,7 @@
 
 //  FIFO transfer size
 
-#define ICM20948_FIFO_CHUNK_SIZE     12                      // gyro and accels take 12 bytes
-
+#define ICM20948_FIFO_CHUNK_SIZE     20 // gyro and accel are 12, compass 8
 
 class RTIMUICM20948 : public RTIMU
 {
@@ -53,7 +52,6 @@ public:
     bool mag_write(uint8_t reg, uint8_t value);
     bool mag_read_bytes(unsigned char* data, uint8_t length=1);
     uint8_t mag_read(uint8_t reg);
-    bool magnetometer_ready();
 
     virtual const char *IMUName() { return "ICM-20948"; }
     virtual int IMUType() { return RTIMU_TYPE_ICM20948; }

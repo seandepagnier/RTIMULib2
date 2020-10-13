@@ -75,7 +75,6 @@ int main()
             sampleCount++;
 
             now = RTMath::currentUSecsSinceEpoch();
-
             //  display 10 times per second
 
             if ((now - displayTimer) > 100000) {
@@ -95,7 +94,7 @@ int main()
                 if(c==10){
                     settings->m_compassCalEllipsoidValid = !settings->m_compassCalEllipsoidValid;
                     c=0;
-                    printf("value %d\n", settings->m_compassCalEllipsoidValid);
+                    //printf("value %d\n", settings->m_compassCalEllipsoidValid);
                 }
                 c++;
             }
