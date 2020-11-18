@@ -41,6 +41,7 @@ RTIMU_sources = [
     "IMUDrivers/RTIMUNull.cpp",
     "IMUDrivers/RTIMUMPU9150.cpp",
     "IMUDrivers/RTIMUMPU925x.cpp",
+    "IMUDrivers/RTIMUICM20948.cpp",
     "IMUDrivers/RTIMUGD20HM303D.cpp",
     "IMUDrivers/RTIMUGD20HM303DLHC.cpp",
     "IMUDrivers/RTIMUGD20M303DLHC.cpp",

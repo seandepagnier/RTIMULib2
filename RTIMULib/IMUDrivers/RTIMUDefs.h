@@ -30,6 +30,8 @@
 #ifndef _RTIMUDEFS_H
 #define	_RTIMUDEFS_H
 
+// #include <map>
+
 //  IMU type codes
 //
 //  For compatibility, only add new codes at the end to avoid renumbering
@@ -45,6 +47,7 @@
 #define RTIMU_TYPE_GD20HM303DLHC            8                   // STM L3GD20H/LSM303DHLC (new Adafruit IMU)
 #define RTIMU_TYPE_BMX055                   9                   // Bosch BMX055
 #define RTIMU_TYPE_BNO055                   10                  // Bosch BNO055
+#define RTIMU_TYPE_ICM20948                 11                  // InvenSense ICM20948
 
 // old MPU9255 was 11, don't use (will get redetected to MPU925x)
 #define RTIMU_TYPE_LSM6DS33LIS3MDL          12                  // STM LSM6DS33/LIS3MDL (Pololu MinIMU v5 / AltIMU v5)
@@ -258,6 +261,136 @@
 #define AK8963_CNTL                 0x0a                    // control reg
 #define AK8963_ASAX                 0x10                    // start of the fuse ROM data
 
+//----------------------------------------------------------
+//
+//  ICM-20948
+//  references:
+//      https://invensense.tdk.com/wp-content/uploads/2016/06/DS-000189-ICM-20948-v1.3.pdf
+//      https://invensense.tdk.com/wp-content/uploads/2015/12/eMD_Software_Guide_Nucleo_ICM20x48.pdf
+//      https://github.com/pimoroni/icm20948-python/blob/master/library/icm20948/__init__.py
+//      https://github.com/PX4/Firmware/blob/master/src/drivers/imu/invensense/icm20948/InvenSense_ICM20948_registers.hpp
+
+//  ICM20948 I2C Slave Addresses
+
+#define ICM20948_ADDRESS0               0x68
+#define ICM20948_ADDRESS1               0x69
+#define ICM20948_ID                     0xEA
+#define ICM20948_WHO_AM_I               0x00
+
+#define ICM20948_REG_BANK_SEL           0x7F
+// BANK_N has address of (N << 4)
+#define ICM20948_BANK0                  0x00
+#define ICM20948_BANK1                  0x10
+#define ICM20948_BANK2                  0x20
+#define ICM20948_BANK3                  0x30
+
+#define AK09916_ADDRESS                 0x0C
+
+//  Register map
+
+#define ICM20948_GYRO_SMPLRT_DIV    0x10
+#define ICM20948_ACCEL_SMPLRT_DIV_1 0x10
+#define ICM20948_ACCEL_SMPLRT_DIV_2 0x11
+#define ICM20948_GYRO_CONFIG_1       0x01
+#define ICM20948_GYRO_CONFIG_2       0x02
+#define ICM20948_ACCEL_CONFIG        0x14
+#define ICM20948_FIFO_EN_1           0x66
+#define ICM20948_FIFO_EN_2           0x67
+#define ICM20948_I2C_MST_CTRL        0x01
+#define ICM20948_I2C_MST_DELAY_CTRL  0x02
+#define ICM20948_I2C_SLV0_ADDR       0x03
+#define ICM20948_I2C_SLV0_REG        0x04
+#define ICM20948_I2C_SLV0_CTRL       0x05
+#define ICM20948_I2C_SLV0_DO         0x06
+#define ICM20948_I2C_SLV1_ADDR       0x07
+#define ICM20948_I2C_SLV1_REG        0x08
+#define ICM20948_I2C_SLV1_CTRL       0x09
+#define ICM20948_I2C_SLV1_DO         0x0A
+#define ICM20948_I2C_SLV2_ADDR       0x0B
+#define ICM20948_I2C_SLV2_REG        0x0C
+#define ICM20948_I2C_SLV2_CTRL       0x0D
+#define ICM20948_I2C_SLV2_DO         0x0E
+#define ICM20948_INT_PIN_CFG         0x0F
+#define ICM20948_INT_ENABLE          0x10
+#define ICM20948_INT_ENABLE_1        0x11
+#define ICM20948_INT_STATUS          0x19
+#define ICM20948_ACCEL_XOUT_H        0x2D
+#define ICM20948_GYRO_XOUT_H         0x33
+#define ICM20948_EXT_SLV_SENS_DATA_00    0x3B
+#define ICM20948_EXT_SLV_SENS_DATA_01    0x3C
+#define ICM20948_I2C_MST_DELAY_CTRL  0x02
+#define ICM20948_USER_CTRL           0x03
+#define ICM20948_PWR_MGMT_1          0x06
+#define ICM20948_PWR_MGMT_2          0x07
+#define ICM20948_FIFO_RST            0x68
+#define ICM20948_FIFO_COUNTH         0x70
+#define ICM20948_FIFO_COUNTL         0x71
+#define ICM20948_FIFO_R_W            0x72
+
+//  sample rate defines (applies to gyros and accels, not mags)
+
+#define ICM20948_SAMPLERATE_MIN      5                       // 5 samples per second is the lowest
+#define ICM20948_SAMPLERATE_MAX      32000                   // 32000 samples per second is the absolute maximum
+
+//  compass rate ICM20948
+
+#define ICM20948_COMPASSRATE_MIN     1                       // 1 samples per second is the lowest
+#define ICM20948_COMPASSRATE_MAX     100                     // 100 samples per second is maximum
+
+//  Gyro LPF options
+
+#define ICM20948_GYRO_LPF_BYPASS     0x11                    // 12106.0 Hz, when GYRO_FCHOICE is 0
+#define ICM20948_GYRO_LPF_196_6      0x00                    //   196.6 Hz
+#define ICM20948_GYRO_LPF_151_8      0x01                    //   151.8 Hz
+#define ICM20948_GYRO_LPF_119_5      0x02                    //   119.5 Hz
+#define ICM20948_GYRO_LPF_51_2       0x03                    //    51.2 Hz
+#define ICM20948_GYRO_LPF_23_9       0x04                    //    23.9 Hz
+#define ICM20948_GYRO_LPF_11_6       0x05                    //    11.6 Hz
+#define ICM20948_GYRO_LPF_5_7        0x06                    //     5.7 Hz
+#define ICM20948_GYRO_LPF_361_4      0x07                    //   361.4 Hz
+
+//  Gyro FSR options
+
+#define ICM20948_GYROFSR_250         0b00                    // +/- 250 degrees per second
+#define ICM20948_GYROFSR_500         0b01                    // +/- 500 degrees per second
+#define ICM20948_GYROFSR_1000        0b10                    // +/- 1000 degrees per second
+#define ICM20948_GYROFSR_2000        0b11                    // +/- 2000 degrees per second
+
+//  Accel FSR options
+
+#define ICM20948_ACCELFSR_2          0b00                    // +/- 2g
+#define ICM20948_ACCELFSR_4          0b01                    // +/- 4g
+#define ICM20948_ACCELFSR_8          0b10                    // +/- 8g
+#define ICM20948_ACCELFSR_16         0b11                    // +/- 16g
+// const std::map<uint8_t, RTFLOAT> ACCELFSR_MAP = {
+//     {ICM20948_ACCELFSR_2, 1.0/16384.0},
+//     {ICM20948_ACCELFSR_4, 1.0/8192.0},
+//     {ICM20948_ACCELFSR_8, 1.0/4096.0},
+//     {ICM20948_ACCELFSR_16, 1.0/2048.0},
+// };
+
+//  Accel LPF options
+
+#define ICM20948_ACCEL_LPF_BYPASS     0x11                    // 1209.0 Hz, when ACCEL_FCHOICE is 0
+// #define ICM20948_ACCEL_LPF_246        0x00                    //  246.0 Hz
+#define ICM20948_ACCEL_LPF_246        0x01                    //  246.0 Hz
+#define ICM20948_ACCEL_LPF_111_4      0x02                    //  111.4 Hz
+#define ICM20948_ACCEL_LPF_50_4       0x03                    //   50.4 Hz
+#define ICM20948_ACCEL_LPF_23_9       0x04                    //   23.9 Hz
+#define ICM20948_ACCEL_LPF_11_5       0x05                    //   11.5 Hz
+#define ICM20948_ACCEL_LPF_5_7        0x06                    //    5.7 Hz
+#define ICM20948_ACCEL_LPF_473        0x07                    //  473.0 Hz
+
+//  AK09916 compass registers
+
+#define AK09916_I2C_ADDR             0x0C                    // the device ID
+#define AK09916_DEVICEID             0x09                    // the device ID
+#define AK09916_WHO_AM_I             0x01                    // the device ID
+#define AK09916_ST1                  0x10                    // status 1
+#define AK09916_ST2                  0x18                    // status 2
+#define AK09916_CNTL2                0x31                    // control reg
+#define AK09916_CNTL3                0x32                    // control reg
+#define AK09916_HXL                  0x11                    // control reg
 
 //----------------------------------------------------------
 //
