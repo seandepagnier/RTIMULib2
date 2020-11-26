@@ -441,7 +441,7 @@ bool RTIMUICM20948::trigger_mag_io()
 
     if (!m_settings->HALRead(m_slaveAddr, ICM20948_USER_CTRL, 1, &userControl, "Failed to read user_ctrl reg")) return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, userControl | 0x20, "Failed to set user_ctrl reg")) return false;
-    m_settings->delayMs(50);
+    m_settings->delayMs(5);
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, userControl, "Failed to set user_ctrl reg")) return false;
     
     return true;
@@ -716,7 +716,8 @@ bool RTIMUICM20948::IMURead()
     if (m_firstTime)
         m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
     else
-        m_imuData.timestamp += m_sampleInterval;
+        m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
+        // m_imuData.timestamp += m_sampleInterval;
 
     m_firstTime = false;
 
