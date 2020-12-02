@@ -634,8 +634,8 @@ void RTIMUSettings::setDefaults()
 
     //  ICM20948 defaults
 
-    m_ICM20948GyroAccelSampleRate = 80;
-    m_ICM20948CompassSampleRate = 40;
+    m_ICM20948GyroAccelSampleRate = 100;
+    m_ICM20948CompassSampleRate = 100;
     m_ICM20948GyroLpf = ICM20948_GYRO_LPF_51_2;
     m_ICM20948AccelLpf = ICM20948_ACCEL_LPF_50_4;
     m_ICM20948GyroFsr = ICM20948_GYROFSR_1000;
@@ -1116,6 +1116,7 @@ bool RTIMUSettings::saveSettings()
     setComment("  11 = Old MPU-9255 (don't use)");
     setComment("  12 = STM LSM6DS33 + LIS3MDL");
     setComment("  13 = HMC5883L + ADXL345 + L3G4200D");
+    setComment("  14 = InvenSense ICM-20948");
     setValue(RTIMULIB_IMU_TYPE, m_imuType);
 
     setBlank();

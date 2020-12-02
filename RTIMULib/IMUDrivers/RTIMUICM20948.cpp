@@ -110,7 +110,14 @@ bool RTIMUICM20948::setCompassRate(int rate)
         HAL_ERROR1("Illegal compass rate %d\n", rate);
         return false;
     }
-    m_compassRate = rate;
+    if (rate <= 10)
+        m_compassRate = 10;
+    else if (rate <= 20)
+        m_compassRate = 20;
+    else if (rate <= 50)
+        m_compassRate = 50;
+    else
+        m_compassRate = 100;
     return true;
 }
 
@@ -177,7 +184,6 @@ bool RTIMUICM20948::SelectRegisterBank(uint8_t reg_bank)
     if (reg_bank != m_reg_bank) {
         if (!m_settings->HALWrite(m_slaveAddr, ICM20948_REG_BANK_SEL, reg_bank, "Failed to set ICM20948 register bank"))
             return false;
-        m_settings->delayMs(10);
         m_reg_bank = reg_bank;
     }
     return true;
@@ -228,6 +234,7 @@ bool RTIMUICM20948::IMUInit()
 
     if (!SelectRegisterBank(ICM20948_BANK0))
         return false;
+    // DEVICE_RESET
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_PWR_MGMT_1, 0x80, "Failed to initiate ICM20948 reset"))
         return false;
     m_settings->delayMs(100);
@@ -249,51 +256,6 @@ bool RTIMUICM20948::IMUInit()
     if(!compassSetup()) {
         return false;
     }
-
-    if (!setCompassRate())
-        return false;
-
-    
-    // //  enable the sensors
-    if (!SelectRegisterBank(ICM20948_BANK0))
-        return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_PWR_MGMT_1, 0x01, "Failed to stop ICM20948 reset"))
-        return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_PWR_MGMT_2, 0x00, "Failed to stop ICM20948 reset"))
-        return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_PIN_CFG, 0x30, "Failed to set ICM20948_INT_PIN_CFG"))
-        // return false;
-    
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_1, 0x0, "Writing fifo enable"))
-    //     return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_EN_2, 0b00011110, "Writing fifo enable"))
-    //     return false;
-    // // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_FIFO_RST, 0x00, "Resetting fifo"))
-    //     // return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0b01000000, "Enabling the fifo"))
-    //     return false;
-
-    // if (!SelectRegisterBank(ICM20948_BANK3))
-    //     return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_CTRL, 0x4D, "Failed to set ICM20948_I2C_MST_CTRL"))
-    //      return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_DELAY_CTRL, 0x01, "Failed to set ICM20948_I2C_MST_DELAY_CTRL"))
-    //      return false;
-
-    // Reset the magnetometer
-    // mag_write(AK09916_CNTL3, 0x01)
-    // while self.mag_read(AK09916_CNTL3) == 0x01:
-    //     time.sleep(0.0001)
-    
-    //  select the data to go into the FIFO and enable
-
-    // if (!resetFifo())
-        // return false;
-    
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_PIN_CFG, 0x22, "Writing int enable"))
-    //     return false;    
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_INT_ENABLE_1, 0x01, "Writing int enable"))
-    //     return false;
     
     gyroBiasInit();
 
@@ -478,6 +440,24 @@ uint8_t RTIMUICM20948::mag_read(uint8_t reg)
     m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, 1, &b, "Failed to read compass data");
     return b;
 }
+bool RTIMUICM20948::mag_read_bytes(uint8_t reg, unsigned char* data, uint8_t length)
+{
+    if (!SelectRegisterBank(ICM20948_BANK3))
+        return false;
+    
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_CTRL, 0x80 | 0x08 | length, "Failed to set magnetometer reg value to slave")) return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_ADDR, AK09916_I2C_ADDR | 0x80, "Failed to set magnetometer as slave")) return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_REG, reg, "Failed to set magnetometer reg to slave")) return false;
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV0_DO, 0xff, "Failed to set magnetometer reg value to slave")) return false;
+
+    trigger_mag_io();
+
+    m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, length, data, "Failed to read compass data");
+    return true;
+}
+bool RTIMUICM20948::magnetometer_ready() {
+    return mag_read(AK09916_ST1) & 0x01 > 0;
+}
 
 
 bool RTIMUICM20948::bypassOn()
@@ -551,23 +531,23 @@ bool RTIMUICM20948::compassSetup() {
 
     std::cout << "mag_read(AK09916_WHO_AM_I) " << int(mag_read(AK09916_WHO_AM_I)) << std::endl;
 
+    // soft reset
     mag_write(AK09916_CNTL3, 0x01);
     while (mag_read(AK09916_CNTL3) == 0x01) {
         usleep(1000);
     }
-    std::cout << "COMPASS RESET!" << std::endl;
-    // bypassOn();
-    // if (!SelectRegisterBank(ICM20948_BANK3))
-    //     return false;
-    // if (!m_settings->HALWrite(AK09916_ADDRESS, AK09916_CNTL3, 0x01, "Failed to set reset compass")) {
-    // // if (!m_settings->HALWrite(AK09916_ADDRESS, AK09916_CNTL2, 0x02, "Failed to set compass in power down mode")) {
-    //     bypassOff();
-    //     return false;
-    // }
-    // bypassOff();
     m_settings->delayMs(100);
+
+    uint8_t rate = 0b1000; // continuous 100hz
+    if (m_compassRate <= 10)
+        rate = 0b0010; // continuous 10hz
+    else if (m_compassRate <= 20)
+        rate = 0b0100; // continuous 20hz
+    else if (m_compassRate <= 50)
+        rate = 0b0110; // continuous 50hz
     
-    mag_write(AK09916_CNTL2, 0x01);
+    // mag_write(AK09916_CNTL2, 0b0001); // single measurement mode
+    mag_write(AK09916_CNTL2, rate);
     m_settings->delayMs(100);
     
     std::cout << "mag_read(AK09916_WHO_AM_I) " << int(mag_read(AK09916_WHO_AM_I)) << std::endl;
@@ -575,7 +555,6 @@ bool RTIMUICM20948::compassSetup() {
     std::cout << "mag_read(AK09916_CNTL3) " << int(mag_read(AK09916_CNTL3)) << std::endl;
     std::cout << "mag_read(AK09916_ST1) " << int(mag_read(AK09916_ST1)) << std::endl;
     std::cout << "mag_read(AK09916_ST2) " << int(mag_read(AK09916_ST2)) << std::endl;
-    std::cout << "mag_read(AK09916_HXL) " << int(mag_read(AK09916_HXL)) << std::endl;
 
 
     if (!SelectRegisterBank(ICM20948_BANK3)) return false;
@@ -593,56 +572,9 @@ bool RTIMUICM20948::compassSetup() {
         return false;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV1_DO, 0x01, "Failed to set slave 1 DO"))
         return false;
-    
-
-    // if (!SelectRegisterBank(ICM20948_BANK0))
-    //     return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x20, "Failed to write user_ctrl reg"))
-    //     return false;
-
-    // if (!SelectRegisterBank(ICM20948_BANK3))
-    //     return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_CTRL, 0x4D, "Failed to set I2C master mode"))
-    //     return false;
-    // // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_DELAY_CTRL, 0x83, "Failed to set I2C master mode"))
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_DELAY_CTRL, 0x01, "Failed to set I2C master mode"))
-    //     return false;
-    // if (!SelectRegisterBank(ICM20948_BANK0))
-    //     return false;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x20, "Failed to write user_ctrl reg"))
-    //     return false;
-    
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_MST_DELAY_CTRL, 0x3, "Failed to set mst delay"))
-        // return false;
-
-    
-    
-    // m_settings->delayMs(10);
-    // if (!mag_write(AK09916_CNTL3, 0x01))
-    //     return false;
-    // m_settings->delayMs(10);
 
     return true;
 }
-
-bool RTIMUICM20948::setCompassRate()
-{
-    if (!SelectRegisterBank(ICM20948_BANK3))
-        return false;
-
-    int rate;
-
-    rate = m_sampleRate / m_compassRate - 1;
-
-    if (rate > 31)
-        rate = 31;
-    // if (!m_settings->HALWrite(m_slaveAddr, ICM20948_I2C_SLV4_CTRL, rate, "Failed to set slave ctrl 4"))
-        //  return false;
-    // TODO: put this in compass setup
-    return true;
-}
-
-
 
 int RTIMUICM20948::IMUGetPollInterval()
 {
@@ -655,7 +587,7 @@ int RTIMUICM20948::IMUGetPollInterval()
 bool RTIMUICM20948::IMURead()
 {
     unsigned char fifoData[12];
-    unsigned char compassData[8];
+    unsigned char compassData[6];
 
     if (!SelectRegisterBank(ICM20948_BANK3))
         return false;
@@ -665,23 +597,25 @@ bool RTIMUICM20948::IMURead()
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
     if (!m_settings->HALRead(m_slaveAddr, ICM20948_ACCEL_XOUT_H, ICM20948_FIFO_CHUNK_SIZE, fifoData, "Failed to read fifo data"))
         return false;
-    trigger_mag_io();
-    if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    if (!m_settings->HALRead(m_slaveAddr, ICM20948_EXT_SLV_SENS_DATA_00, 8, compassData, "Failed to read compass data"))
-        return false;
+    while (!magnetometer_ready()) {
+        usleep(1);
+    }
+    mag_read_bytes(AK09916_HXL, compassData, 6);
+    // Read ST2 to confirm self read finished, needed for continuous modes
+    mag_read(AK09916_ST2);
     
 
-    if (!SelectRegisterBank(ICM20948_BANK2))
-        return false;
-    uint8_t a_scale;
-    if (!m_settings->HALRead(m_slaveAddr, ICM20948_ACCEL_CONFIG, 1, &a_scale, "Failed to read fifo data"))
-        return false;
-    a_scale = (a_scale & 0x06) >> 1;
+    // if (!SelectRegisterBank(ICM20948_BANK2))
+    //     return false;
+    // uint8_t a_scale;
+    // if (!m_settings->HALRead(m_slaveAddr, ICM20948_ACCEL_CONFIG, 1, &a_scale, "Failed to read fifo data"))
+    //     return false;
+    // a_scale = (a_scale & 0x06) >> 1;
     // RTMath::convertToVector(fifoData, m_imuData.accel, ACCELFSR_MAP.at(a_scale), true);
     
     RTMath::convertToVector(fifoData, m_imuData.accel, m_accelScale, true);
     RTMath::convertToVector(fifoData + 6, m_imuData.gyro, m_gyroScale, true);
-    RTMath::convertToVector(compassData + 1, m_imuData.compass, 0.15f, false);
+    RTMath::convertToVector(compassData, m_imuData.compass, 0.15f, false);
 
     // std::cout << "GYRO: " << m_imuData.gyro.x() << " " << m_imuData.gyro.y() << " " << m_imuData.gyro.z() << " " <<  std::endl;
     // std::cout << "ACCEL: " << int(a_scale) << "  " << m_imuData.accel.x() << " " << m_imuData.accel.y() << " " << m_imuData.accel.z() << " " <<  std::endl;
@@ -690,21 +624,20 @@ bool RTIMUICM20948::IMURead()
     
     //  sort out gyro axes
 
+    // x fwd y right z down
     m_imuData.gyro.setX(m_imuData.gyro.x());
     m_imuData.gyro.setY(-m_imuData.gyro.y());
     m_imuData.gyro.setZ(-m_imuData.gyro.z());
 
     //  sort out accel data;
 
+    // x back y left z up
     m_imuData.accel.setX(-m_imuData.accel.x());
 
     //  sort out compass axes
 
-    float temp;
+    // x fwd y right z down
 
-    temp = m_imuData.compass.x();
-    m_imuData.compass.setX(m_imuData.compass.y());
-    m_imuData.compass.setY(-temp);
 
 
     //  now do standard processing
@@ -713,17 +646,21 @@ bool RTIMUICM20948::IMURead()
     calibrateAverageCompass();
     calibrateAccel();
 
-    if (m_firstTime)
-        m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
-    else
-        m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
-        // m_imuData.timestamp += m_sampleInterval;
+    // if (m_firstTime)
+    //     m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
+    // else
+    //     m_imuData.timestamp += m_sampleInterval;
+
+    m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
 
     m_firstTime = false;
 
     //  now update the filter
 
     updateFusion();
+    
+    if (!SelectRegisterBank(ICM20948_BANK0))
+        return false;
 
     return true;
 }
