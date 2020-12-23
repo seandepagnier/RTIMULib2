@@ -313,14 +313,14 @@ bool RTIMUICM20948::setGyroConfig()
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_SMPLRT_DIV, rate, "Failed to write gyro sample rate"))
         return false;
         
-    value = (/*m_gyroLpf*/ 3 & 0x07) << 3;
+    value = (/*m_gyroLpf*/ 4 & 0x07) << 3;
     value |= m_gyroFsr << 1; // gyro fsr
     value |= 1; // enable lpf
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_CONFIG_1, value, "Failed to write gyro config"))
         return false;
 
     // TODO: do lower settings have higher noise!?!?  Is 5 ok??
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_CONFIG_2, 4, "Failed to write gyro config"))
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_GYRO_CONFIG_2, 0, "Failed to write gyro config"))
         return false;
     
     return true;
@@ -345,7 +345,7 @@ bool RTIMUICM20948::setAccelConfig()
         
     // accelerometer fsr
     value = (m_accelFsr << 1);
-    value |= (/*m_accelLpf*/ 3 & 0x07) << 3; // TODO: report bug in pimoroni
+    value |= (/*m_accelLpf*/ 4 & 0x07) << 3;
     value |= 1; // enable lpf
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_ACCEL_CONFIG, value, "Failed to write accelerometer config"))
         return false;
@@ -362,7 +362,7 @@ bool RTIMUICM20948::setSampleRate()
     //     return true;                                        // SMPRT not used above 1000Hz
 #if 0
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_LP_CONFIG, 0x00, "Failed to set sample rate"))
+    if (!m_settings->HALWrite(m_slaveAddr, ICM20948_LP_CONFIG, 0x40, "Failed to set sample rate"))
         return false;
 #endif
     return true;
@@ -523,7 +523,6 @@ bool RTIMUICM20948::compassSetup()
     
     m_settings->delayMs(5);
     if (!SelectRegisterBank(ICM20948_BANK0)) return false;
-    uint8_t userControl;
     if (!m_settings->HALWrite(m_slaveAddr, ICM20948_USER_CTRL, 0x22, "Failed to set user_ctrl reg")) return false;
     m_settings->delayMs(5);
 
@@ -594,7 +593,10 @@ bool RTIMUICM20948::IMURead()
         RTVector3 accel, gyro, compass;
         RTMath::convertToVector(p,    accel, m_accelScale, true);
         RTMath::convertToVector(p+6,  gyro, m_gyroScale, true);
-        RTMath::convertToVector(p+12, compass, .6, false);
+        RTMath::convertToVector(p+12, compass, .6/4, false);
+
+        if(fabs(gyro.x()) > 3 || fabs(gyro.y()) > 3 || fabs(gyro.z()) > 3)
+            printf("AAAHAHA %f %f %f %d %d\n", gyro.x(), gyro.y(), gyro.z(), i, count);
 
         accel_t += accel;
         gyro_t += gyro;
@@ -616,7 +618,6 @@ bool RTIMUICM20948::IMURead()
         m_imuData.gyro.setData(i, gyro_t.data(i)/count);
         m_imuData.compass.setData(i, compass_t.data(i)/compass_count);
     }
-   
     //  sort out gyro axes
 
     // x fwd y right z down
