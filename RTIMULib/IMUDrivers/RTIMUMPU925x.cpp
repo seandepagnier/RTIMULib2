@@ -599,7 +599,7 @@ bool RTIMUMPU925x::IMURead()
         m_imuData.accel.setData(i, accel_t.data(i)/count);
         m_imuData.gyro.setData(i, gyro_t.data(i)/count);
         m_imuData.compass.setData(i, compass_t.data(i)/count);
-    }
+   }
 #endif
 
     //  sort out gyro axes

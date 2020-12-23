@@ -210,7 +210,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                         return true;
                     }
                 }
-            } else if (result == LSM6DS33_ID) {
+            } else if (result == LSM6DS33_ID || result == 0x6b) {
                 if (HALRead(LIS3MDL_ADDRESS0, LIS3MDL_WHO_AM_I, 1, &altResult, "")) {
                     if (altResult == LIS3MDL_ID) {
                         imuType = RTIMU_TYPE_LSM6DS33LIS3MDL;
@@ -315,7 +315,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                         return true;
                     }
                 }
-            } else if (result == LSM6DS33_ID) {
+            } else if (result == LSM6DS33_ID || result == 0x6b) {
                 if (HALRead(LIS3MDL_ADDRESS0, LIS3MDL_WHO_AM_I, 1, &altResult, "")) {
                     if (altResult == LIS3MDL_ID) {
                         imuType = RTIMU_TYPE_LSM6DS33LIS3MDL;
@@ -717,15 +717,15 @@ void RTIMUSettings::setDefaults()
 
     // LSM6DS33LIS3MDL defaults
 
-    m_LSM6DS33LIS3MDLGyroSampleRate = LSM6DS33_GYRO_SAMPLERATE_104;
+    m_LSM6DS33LIS3MDLGyroSampleRate = LSM6DS33_GYRO_SAMPLERATE_26;
     m_LSM6DS33LIS3MDLGyroHpf = LSM6DS33_GYRO_HPF_3;
-    m_LSM6DS33LIS3MDLGyroFsr = LSM6DS33_GYRO_FSR_500;
+    m_LSM6DS33LIS3MDLGyroFsr = LSM6DS33_GYRO_FSR_245;
 
-    m_LSM6DS33LIS3MDLAccelSampleRate = LSM6DS33_ACCEL_SAMPLERATE_104;
-    m_LSM6DS33LIS3MDLAccelFsr = LSM6DS33_ACCEL_FSR_8;
+    m_LSM6DS33LIS3MDLAccelSampleRate = LSM6DS33_ACCEL_SAMPLERATE_26;
+    m_LSM6DS33LIS3MDLAccelFsr = LSM6DS33_ACCEL_FSR_2;
     m_LSM6DS33LIS3MDLAccelLpf = LSM6DS33_ACCEL_LPF_50;
 
-    m_LSM6DS33LIS3MDLCompassSampleRate = LIS3MDL_SAMPLERATE_20;
+    m_LSM6DS33LIS3MDLCompassSampleRate = LIS3MDL_SAMPLERATE_10;
     m_LSM6DS33LIS3MDLCompassFsr = LIS3MDL_FSR_4;
     m_LSM6DS33LIS3MDLCompassPowerMode = LIS3MDL_POWER_LP;
 }

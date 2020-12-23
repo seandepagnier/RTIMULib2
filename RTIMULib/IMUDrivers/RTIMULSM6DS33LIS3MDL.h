@@ -42,13 +42,14 @@ public:
     virtual bool IMURead();
 
 private:
+    bool setAccelCTRL1();
     bool setGyroCTRL2();
     bool setGyroCTRL7();
-    bool setAccelCTRL1();
     bool setCompassCTRL1();
     bool setCompassCTRL2();
     bool setCompassCTRL3();
     bool setCompassCTRL4();
+    bool setCompassCTRL5();
 
     unsigned char m_accelGyroSlaveAddr;                     // I2C address of LSM6DS33 accel and gyro
     unsigned char m_compassSlaveAddr;                       // I2C address of LIS3MDL mag
