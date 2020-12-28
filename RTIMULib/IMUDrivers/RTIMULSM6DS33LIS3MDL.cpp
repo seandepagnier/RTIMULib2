@@ -76,20 +76,21 @@ bool RTIMULSM6DS33LIS3MDL::IMUInit()
     if (!m_settings->HALOpen())
         return false;
 
-    //  Set up the accel/gyro
 
-    id = 0x6b;
-    if (!m_settings->HALRead(m_accelGyroSlaveAddr, LSM6DS33_WHO_AM_I, 1, &result, "Failed to read LSM6DS33 accel/gyro id"))
+    //  Set up the accel/gyro
+    if (!m_settings->HALRead(m_accelGyroSlaveAddr, LSM6DS33_WHO_AM_I, 1, &m_imuid, "Failed to read LSM6DS33 accel/gyro id"))
         return false;
 
-    if (result != id) {
+    if (m_imuid != LSM6DS33_ID && m_imuid != ISM330DHCX_ID) {
         HAL_ERROR1("Incorrect LSM6DS33 accel/gyro id %d\n", result);
         return false;
     }
 
+    // reset device
     m_settings->HALWrite(m_accelGyroSlaveAddr, LSM6DS33_CTRL3_C, 0x01, "Failed to set LSM6DS33 gyro CTRL3_C");
+
+    // block data update msb and lsb and register increment
     m_settings->HALWrite(m_accelGyroSlaveAddr, LSM6DS33_CTRL3_C, 0x44, "Failed to set LSM6DS33 gyro CTRL3_C");
-    
 
     if (!setAccelCTRL1())
         return false;

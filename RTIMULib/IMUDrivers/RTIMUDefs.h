@@ -49,7 +49,7 @@
 #define RTIMU_TYPE_BNO055                   10                  // Bosch BNO055
 
 // old MPU9255 was 11, don't use (will get redetected to MPU925x)
-#define RTIMU_TYPE_LSM6DS33LIS3MDL          12                  // STM LSM6DS33/LIS3MDL (Pololu MinIMU v5 / AltIMU v5)
+#define RTIMU_TYPE_LSM6DS33LIS3MDL          12                  // STM (LSM6DS33 or ISM330D)/LIS3MDL (Pololu MinIMU v5 / AltIMU v5)
 
 #define RTIMU_TYPE_HMC5883LADXL345          13                  // HMC5883L with ADXL345 and L3G4200D
 #define RTIMU_TYPE_ICM20948                 14                  // InvenSense ICM20948
@@ -1276,6 +1276,7 @@
 #define LSM6DS33_ADDRESS0           0x6a
 #define LSM6DS33_ADDRESS1           0x6b
 #define LSM6DS33_ID                 0x69
+#define ISM330DHCX_ID               0x6b
 
 //  LSM6DS33 Register map
 #define LSM6DS33_FUNC_CFG_ACCESS    0x01

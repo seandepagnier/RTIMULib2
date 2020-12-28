@@ -210,7 +210,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                         return true;
                     }
                 }
-            } else if (result == LSM6DS33_ID || result == 0x6b) {
+            } else if (result == LSM6DS33_ID || result == ISM330DHCX_ID) {
                 if (HALRead(LIS3MDL_ADDRESS0, LIS3MDL_WHO_AM_I, 1, &altResult, "")) {
                     if (altResult == LIS3MDL_ID) {
                         imuType = RTIMU_TYPE_LSM6DS33LIS3MDL;
@@ -315,7 +315,7 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
                         return true;
                     }
                 }
-            } else if (result == LSM6DS33_ID || result == 0x6b) {
+            } else if (result == LSM6DS33_ID || result == ISM330DHCX_ID) {
                 if (HALRead(LIS3MDL_ADDRESS0, LIS3MDL_WHO_AM_I, 1, &altResult, "")) {
                     if (altResult == LIS3MDL_ID) {
                         imuType = RTIMU_TYPE_LSM6DS33LIS3MDL;

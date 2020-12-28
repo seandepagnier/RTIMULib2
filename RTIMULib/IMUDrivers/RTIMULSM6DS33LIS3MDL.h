@@ -54,6 +54,8 @@ private:
     unsigned char m_accelGyroSlaveAddr;                     // I2C address of LSM6DS33 accel and gyro
     unsigned char m_compassSlaveAddr;                       // I2C address of LIS3MDL mag
 
+    unsigned char m_imuid; // device id
+
     RTFLOAT m_gyroScale;
     RTFLOAT m_accelScale;
     RTFLOAT m_compassScale;
