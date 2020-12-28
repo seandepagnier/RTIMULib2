@@ -559,13 +559,6 @@ bool RTIMUICM20948::IMURead()
         return false;
     }
 
-    if (count >= 512) {
-        // is this even possible?
-        HAL_INFO("ICM20948 fifo count invalid!!\n");
-        resetFifo();
-        return false;
-    }
-
     if (count > 400) {
         HAL_INFO("ICM20948 fifo has more than 20 samples!!\n");
         count = 400;
@@ -588,7 +581,6 @@ bool RTIMUICM20948::IMURead()
     unsigned char *p = fifoData;
 
     int compass_count = 0;
-//    printf("count %d %x %x\n", count, fifoCount[0], fifoCount[1]);
     for(uint8_t i=0; i<count; i++) {
         RTVector3 accel, gyro, compass;
         RTMath::convertToVector(p,    accel, m_accelScale, true);
@@ -635,15 +627,9 @@ bool RTIMUICM20948::IMURead()
     // x fwd y right z down
 
     //  now do standard processing
-
     handleGyroBias();
     calibrateAverageCompass();
     calibrateAccel();
-
-    // if (m_firstTime)
-    //     m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
-    // else
-    //     m_imuData.timestamp += m_sampleInterval;
 
     m_imuData.timestamp = RTMath::currentUSecsSinceEpoch();
 
