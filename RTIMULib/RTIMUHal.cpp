@@ -34,9 +34,10 @@ RTIMUHal::RTIMUHal()
 {
     m_I2CBus = 255;
     m_currentSlave = 255;
-    m_I2C = -1;
-    m_SPI = -1;
+    m_I2C = -2;
+    m_SPI = -2;
     m_SPISpeed = 500000;
+    m_SPIPrev = 1;
 }
 
 RTIMUHal::~RTIMUHal()
@@ -62,7 +63,8 @@ bool RTIMUHal::HALOpen()
         sprintf(buf, "/dev/i2c-%d", m_I2CBus);
         m_I2C = open(buf, O_RDWR);
         if (m_I2C < 0) {
-            HAL_ERROR1("Failed to open I2C bus %d\n", m_I2CBus);
+            if(m_I2C != -1)
+                HAL_ERROR1("Failed to open I2C bus %d\n", m_I2CBus);
             m_I2C = -1;
             return false;
         }
@@ -75,8 +77,10 @@ bool RTIMUHal::HALOpen()
         sprintf(buf, "/dev/spidev%d.%d", m_SPIBus, m_SPISelect);
         m_SPI = open(buf, O_RDWR);
         if (m_SPI < 0) {
-            HAL_ERROR2("Failed to open SPI bus %d, select %d\n", m_SPIBus, m_SPISelect);
+            if(m_SPIPrev != -1)
+                HAL_ERROR2("Failed to open SPI bus %d, select %d\n", m_SPIBus, m_SPISelect);
             m_SPI = -1;
+            m_SPIPrev = -1;
             return false;
         }
 
@@ -115,6 +119,7 @@ bool RTIMUHal::HALOpen()
              close(m_SPIBus);
              return false;
         }
+        m_SPIPrev = 1;
     }
     return true;
 }

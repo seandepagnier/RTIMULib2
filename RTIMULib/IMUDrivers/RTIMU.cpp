@@ -173,7 +173,12 @@ RTIMU::RTIMU(RTIMUSettings *settings)
         m_fusion = new RTFusion();
         break;
     }
-    HAL_INFO1("Using fusion algorithm %s\n", RTFusion::fusionName(m_settings->m_fusionType));
+
+    static bool once;
+    if(!once) {
+        once = true;
+        HAL_INFO1("Using fusion algorithm %s\n", RTFusion::fusionName(m_settings->m_fusionType));
+    }
 }
 
 RTIMU::~RTIMU()

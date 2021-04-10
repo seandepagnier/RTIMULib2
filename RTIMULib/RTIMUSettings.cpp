@@ -466,7 +466,8 @@ bool RTIMUSettings::discoverIMU(int& imuType, bool& busIsI2C, unsigned char& sla
         HALClose();
     }
 
-    HAL_ERROR("No IMU detected\n");
+    if(m_imuType != RTIMU_TYPE_AUTODISCOVER)
+        HAL_ERROR("No IMU detected\n");
     return false;
 }
 

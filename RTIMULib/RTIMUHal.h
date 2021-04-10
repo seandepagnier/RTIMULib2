@@ -111,6 +111,7 @@ private:
     int m_I2C;
     unsigned char m_currentSlave;
     int m_SPI;
+    int m_SPIPrev;
 };
 
 #endif // _RTIMUHAL_H
