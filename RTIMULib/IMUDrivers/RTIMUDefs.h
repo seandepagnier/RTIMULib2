@@ -1276,6 +1276,7 @@
 #define LSM6DS33_ADDRESS0           0x6a
 #define LSM6DS33_ADDRESS1           0x6b
 #define LSM6DS33_ID                 0x69
+#define LSM6DSL_ID                  0x6a
 #define ISM330DHCX_ID               0x6b
 
 //  LSM6DS33 Register map

@@ -81,7 +81,7 @@ bool RTIMULSM6DS33LIS3MDL::IMUInit()
     if (!m_settings->HALRead(m_accelGyroSlaveAddr, LSM6DS33_WHO_AM_I, 1, &m_imuid, "Failed to read LSM6DS33 accel/gyro id"))
         return false;
 
-    if (m_imuid != LSM6DS33_ID && m_imuid != ISM330DHCX_ID) {
+    if (m_imuid != LSM6DS33_ID && m_imuid != LSM6DSL_ID && m_imuid != ISM330DHCX_ID) {
         HAL_ERROR1("Incorrect LSM6DS33 accel/gyro id %d\n", result);
         return false;
     }
