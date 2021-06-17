@@ -132,3 +132,29 @@ RTVector3 RTFusion::getAccelResiduals(RTVector3 accel)
     residuals.setZ(-(accel.z() - rotatedGravity.z()));
     return residuals;
 }
+
+RTVector3 RTFusion::getAccelGlobalFrame(RTVector3 accel)
+{
+    RTQuaternion rotatedAccel;
+    RTQuaternion fusedConjugate;
+    RTQuaternion qTemp;
+    RTVector3 accelGCS;
+
+    // simply rotate measured accel with the fusion pose quaternion
+
+    // create the conjugate of the pose
+
+    fusedConjugate = m_fusionQPose.conjugate();
+
+    // now do the rotation - takes two steps with qTemp as the intermediate variable
+    RTQuaternion measuredAccel(0, accel.x(), accel.y(), accel.z());
+    qTemp = measuredAccel * fusedConjugate;
+    rotatedAccel = m_fusionQPose * qTemp;
+
+    // now set the accel in Global Coordinate System as the rotated accel
+
+    accelGCS.setX(rotatedAccel.x());
+    accelGCS.setY(rotatedAccel.y());
+    accelGCS.setZ(rotatedAccel.z());
+    return accelGCS;
+}
